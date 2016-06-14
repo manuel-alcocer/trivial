@@ -15,19 +15,16 @@ class TrivialRoom:
                     #==================#
 
     def __init__(self, room, server):
-        self.room = room
-        self.server = server
-        self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.server, self.room))
         self.running = False
         self.trivial = {}
         self.Load_Vars()
 
     def Load_Vars(self):
-        option_list = (['time_interval', 'wait_time', 'header_time', 'trivial_path' ,
-                        'trivial_db', 'reward' , 'pot', 'admin_nicks'])
+        global options
         self.opts = {}
-        for option in option_list:
+        for option in option.keys():
             self.opts[option] = self.MyOpt(option)
+        self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
 
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
@@ -328,7 +325,7 @@ def set_default_options(options):
         if not weechat.config_is_set_plugin(option):
             weechat.config_set_plugin(option, default_value)
 
-def load_options_cb():
+def load_options():
     global OPTS
     for option in OPTS['default_options'].keys():
         OPTS['plugin_options'][option] = weechat.config_get_plugin(option)
@@ -347,6 +344,7 @@ def free_options_cb():
 def reload_options_cb(data, option, value):
     global OPTS
     OPTS['plugin_options'][option] = value
+    Reload_Trivial_Vars()
     return weechat.WEECHAT_RC_OK
 
 def config_hook():
@@ -408,6 +406,9 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
             MyTriv.Start_Game()
     return weechat.WEECHAT_RC_OK
 
+def Reload_Trivial_Vars():
+    global MyTriv
+    MyTriv.Load_Vars()
 ### End plugin functions
 
 
@@ -426,6 +427,7 @@ def main():
     Register(register_params)
 
     # Setting default options for script
+    global options
     options = {
         'server'        : 'hispano',
         'room'          : '#dnb_&_jungle',
@@ -437,12 +439,11 @@ def main():
         'reward'        : '25000',
         'pot'           : '1',
         'admin_nicks'   : 'z0idberg',
-        'monitor_questions' : '1'
         }
     set_default_options(options)
 
     # load actual plugin options
-    load_options_cb()
+    load_options()
     config_hook()
 
     # create command
@@ -458,7 +459,7 @@ def main():
     AddCommand(main_command)
 
     global MyTriv
-    MyTriv = TrivialRoom('#dnb_&_jungle', 'hispano')
+    MyTriv = TrivialRoom()
     MyTriv.Start_Listener()
 
 if __name__ == '__main__':
