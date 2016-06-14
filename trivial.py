@@ -396,7 +396,7 @@ def Wait_Next_Round_cb(data, remaining_calls):
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
     global MyTriv
     nick = MyTriv.Check_Nick(prefix)
-    if MyTriv.running == True:
+    if MyTriv.running == True and MyTriv.trivial['state'] != 0:
         if message.lower() == MyTriv.answer.lower():
             MyTriv.Winner(nick)
         elif message.lower() == '!trivial stop'.lower() and MyTriv.Is_Admin(nick):
