@@ -22,7 +22,7 @@ class TrivialRoom:
     def Load_Vars(self):
         global options
         self.opts = {}
-        for option in option.keys():
+        for option in options.keys():
             self.opts[option] = self.MyOpt(option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
 
