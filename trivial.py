@@ -86,7 +86,7 @@ class TrivialRoom:
 
     def Check_Session_db(self):
         date_str = str(datetime.now().date())
-        values = (date_str, self.server)
+        values = (date_str, self.opts['server'])
         self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
         if self.result[0] < 1:
             self.InsertOne('insert into sessions (date, server) values (?,?)', values)
@@ -97,7 +97,7 @@ class TrivialRoom:
             return False
 
     def Check_Nick_db(self, nick):
-        values = (nick, self.server)
+        values = (nick, self.opts['server'])
         self.SelectOne('select count(id), id from users where nick=? and server=?', values)
         if self.result[0] < 1:
             try:
