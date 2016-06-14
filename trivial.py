@@ -9,6 +9,262 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
+class TrivialRoom:
+                    #==================#
+                    # OPTIONS SETTINGS #
+                    #==================#
+
+    def __init__(self, room, server):
+        self.room = room
+        self.server = server
+        self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.server, self.room))
+        self.running = False
+        self.trivial = {}
+        self.Load_Vars()
+
+    def Load_Vars(self):
+        option_list = (['time_interval', 'wait_time', 'header_time', 'trivial_path' ,
+                        'trivial_db', 'reward' , 'pot', 'admin_nicks'])
+        self.opts = {}
+        for option in option_list:
+            self.opts[option] = self.MyOpt(option)
+
+    def MyOpt(self, option):
+        value = weechat.config_get_plugin(option)
+        return value
+
+                    #==================#
+                    # LISTENER METHODS #
+                    #==================#
+
+    def Start_Listener(self):
+        self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', '')
+
+    def Stop_Listener(self):
+        weechat.unhook(self.listener_hook)
+
+                    #==============#
+                    # NICK METHODS #
+                    #==============#
+
+    def Check_Nick(self, prefix):
+        if weechat.nicklist_search_nick(self.buffer_ptr, '', prefix):
+            return prefix
+        else:
+            wildcards = '+@'
+            if prefix[0] in wildcards:
+                if weechat.nicklist_search_nick(self.buffer_ptr, '', prefix[1:]):
+                    return prefix[1:]
+
+    def Is_Admin(self, nick):
+        nicklist = self.admin_nicks.split(',')
+        nicklist = [nick_ad.strip(' ') for nick_ad in nicklist]
+        if nick in nicklist:
+            return True
+        else:
+            return False
+
+                    #=================#
+                    # SQLITE3 METHODS #
+                    #=================#
+
+    def OpenDB(self):
+        self.dbpath = self.opts['trivial_path'] + '/' + self.opts['trivial_db']
+        self.conn = sqlite3.connect(self.dbpath)
+        self.conn.text_factory = str
+        self.cur = self.conn.cursor()
+
+    def SelectOne(self, select, values=None):
+        self.OpenDB()
+        self.cur.execute(select, values)
+        self.result = self.cur.fetchone()
+        self.conn.close()
+
+    def InsertOne(self, insert, values):
+        self.OpenDB()
+        self.cur.execute(insert, values)
+        self.conn.commit()
+        self.conn.close()
+
+    def Check_Session_db(self):
+        date_str = str(datetime.now().date())
+        values = (date_str, self.server)
+        self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
+        if self.result[0] < 1:
+            self.InsertOne('insert into sessions (date, server) values (?,?)', values)
+            self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
+        if self.result[0] > 0:
+            return int(self.result[1])
+        else:
+            return False
+
+    def Check_Nick_db(self, nick):
+        values = (nick, self.server)
+        self.SelectOne('select count(id), id from users where nick=? and server=?', values)
+        if self.result[0] < 1:
+            try:
+                self.InsertOne('insert into users (nick, server) values (?,?)', values)
+                self.SelectOne('select count(id), id from users where nick=? and server=?', values)
+            except:
+                weechat.prnt('', 'Error during insertion Nick on DB')
+        if self.result[0] > 0:
+            return int(self.result[1])
+        else:
+            return False
+
+    def Register_Question(self, winner = False):
+        id_session = self.Check_Session_db()
+        id_question = self.qid
+        datetime_str = str(datetime.now())
+        points_won = self.opts['reward']
+        if not winner:
+            values = (datetime_str, id_session, id_question, points_won)
+            insert = 'insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)'
+        else:
+            id_user = self.Check_Nick_db(winner)
+            insert = 'insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)'
+            values = (datetime_str, id_session, id_question, id_user, points_won)
+            for x in values:
+                weechat.prnt('', str(x))
+        self.InsertOne(insert, values)
+
+                    #==============#
+                    # GAME METHODS #
+                    #==============#
+
+    def Main_Timer(self, interval=False, maxcalls=False):
+        if not interval:
+            interval = int(self.opts['time_interval'])
+        if not maxcalls:
+            maxcalls = 4
+        try:
+            self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', '')
+        except:
+            weechat.prnt('', 'Error loading main main_timer on Main_Timer')
+
+    def Start_Game(self):
+        weechat.prnt('', 'Trivial started')
+        self.trivial['state'] = 0
+        # set first question in 10 seconds
+        interval = int(self.opts['header_time'])
+        self.Main_Timer(interval,1)
+
+    def Stop_Game(self):
+        if self.trivial.has_key('main_timer'):
+            weechat.unhook(self.trivial['main_timer'])
+        self.running = False
+        weechat.prnt('', 'Trivial stopped')
+
+    def Fetch_Question(self):
+        self.OpenDB()
+        self.cur.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
+        self.question, self.answer, self.theme, self.qid = self.cur.fetchone()
+        self.conn.close()
+
+    def Show_Question(self):
+        theme = u'\x03' + '12' + self.theme + u'\x0f'
+        question = u'\x02' + self.question + u'\x0f'
+        answer = self.answer
+        weechat.command(self.buffer_ptr, '%s : %s (%s)' %(theme, question, answer))
+
+    def First_State(self):
+        self.trivial['state'] = 1
+        self.Fetch_Question()
+        self.Show_Question()
+        self.Show_Rewards()
+        self.Show_Tips()
+
+    def Second_State(self):
+        self.trivial['state'] = 2
+        self.Show_Question()
+        self.Show_Rewards()
+        self.Show_Tips()
+
+    def Third_State(self):
+        self.trivial['state'] = 3
+        self.Show_Question()
+        self.Show_Rewards()
+        self.Show_Tips()
+
+    def No_Winner(self):
+        self.trivial['state'] = 0
+        weechat.command(self.buffer_ptr, 'no hubo aciertos')
+        self.Register_Question()
+        self.Points_To_Pot()
+        self.Main_Timer()
+
+    def Winner(self, winner):
+        self.trivial['state'] = 0
+        if self.trivial['main_timer']:
+            weechat.unhook(self.trivial['main_timer'])
+        self.Show_Awards(winner)
+        self.Register_Question(winner)
+        self.Show_Session_Awards(winner)
+        interval = int(self.opts['wait_time'])
+        weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', '')
+
+    def Show_Awards(self, winner):
+        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner, self.opts['reward']))
+
+    def Show_Session_Awards(self, winner):
+        id_session = self.Check_Session_db()
+        id_user = self.Check_Nick_db(winner)
+        values = (id_session, id_user)
+        self.OpenDB()
+        select = 'select sum(points_won) from session_questions where id_session=? and id_user=?'
+        self.SelectOne(select, values)
+        points = self.result[0]
+        self.conn.close()
+        weechat.command(self.buffer_ptr, 'Puntos de hoy por %s: %s' % (winner, points))
+
+    def Points_To_Pot(self):
+        pass
+
+    def Show_Tips(self):
+        if self.trivial['state'] == 1:
+            answer = ''
+            for word in self.answer:
+                if word != ' ':
+                    answer = answer + '*'
+                else:
+                    answer = answer + ' '
+        elif self.trivial['state'] == 2:
+            answer = ''
+            count = 0
+            for word in self.answer:
+                if count < 3:
+                    answer = answer + word
+                    count = count + 1
+                else:
+                    if word != ' ':
+                        answer = answer + '*'
+                    else:
+                        answer = answer + ' '
+        elif self.trivial['state'] == 3:
+            answer = ''
+            count = 0
+            constraints = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ'
+            for word in self.answer:
+                if count < 3:
+                    answer = answer + word
+                    count = count + 1
+                else:
+                    if word != ' ':
+                        if word not in constraints:
+                            answer = answer + word
+                        else:
+                            answer = answer + '*'
+                    else:
+                        answer = answer + ' '
+        tip_msg = u'\x03' + '12' + 'Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
+        weechat.command(self.buffer_ptr, tip_msg)
+
+    def Show_Rewards(self):
+        reward = int(self.opts['reward']) / self.trivial['state']
+        reward_str = u'\x03' + '06' + str(reward) + u'\x0f'
+        points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
+        weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
+
 def Register(params):
     global OPTS
     OPTS = {}
@@ -65,318 +321,52 @@ def AddCommand(params):
 
 ### Trivial functions
 def my_trivial_cb(data, buffer, args):
+    global MyTriv
     params = args.split(' ')
     if params[0] == 'start':
-        Start_Game()
+        MyTriv.Start_Game()
     elif params[0] == 'stop':
-        Stop_Game()
+        MyTriv.Stop_Game()
     else:
         # do nothing
         weechat.prnt('', args[1])
     return weechat.WEECHAT_RC_OK
 
-def Start_Game():
-    global trivial
-    Load_Game()
-    weechat.prnt('', 'Trivial started')
-    trivial['state'] = 0
-    # set first question in 10 seconds
-    interval = int(MyOpt('header_time'))
-    Main_Timer(interval,1)
-
-def Stop_Game():
-    global trivial
-    if trivial.has_key('main_timer'):
-        weechat.unhook(trivial['main_timer'])
-    trivial['running'] = False
-    weechat.prnt('', 'Trivial stopped')
-
-def Main_Timer(interval=False, maxcalls=False):
-    global trivial
-    if not interval:
-        interval = int(MyOpt('time_interval'))
-    if not maxcalls:
-        maxcalls = 4
-    trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', '')
-
 def Run_Game_cb(data, remaining_calls):
-    global trivial
-    trivial['running'] = True
-    if trivial['state'] == 0:
+    global MyTriv
+    MyTriv.running = True
+    if MyTriv.trivial['state'] == 0:
         if int(remaining_calls) == 0:
-            Main_Timer(False,3)
-        First_State()
-    elif trivial['state']== 1:
-        Second_State()
-    elif trivial['state'] == 2:
-        Third_State()
+            MyTriv.Main_Timer(False,3)
+        MyTriv.First_State()
+    elif MyTriv.trivial['state']== 1:
+        MyTriv.Second_State()
+    elif MyTriv.trivial['state'] == 2:
+        MyTriv.Third_State()
     else:
-        No_Winner()
+        MyTriv.No_Winner()
     return weechat.WEECHAT_RC_OK
-
-def First_State():
-    global trivial
-    trivial['state'] = 1
-    Fetch_Question()
-    Show_Question()
-    Show_Rewards()
-    Show_Tips()
-
-def Second_State():
-    global trivial
-    trivial['state'] = 2
-    Show_Question()
-    Show_Rewards()
-    Show_Tips()
-
-def Third_State():
-    global trivial
-    trivial['state'] = 3
-    Show_Question()
-    Show_Rewards()
-    Show_Tips()
-
-def No_Winner():
-    global trivial
-    trivial['state'] = 0
-    trivial['reward'] = MyOpt('reward')
-    weechat.command(trivial['buffer_ptr'], 'no hubo aciertos')
-    Register_Question()
-    Points_To_Pot()
-    Main_Timer()
-
-def Winner(winner):
-    global trivial
-    trivial['state'] = 0
-    if trivial['main_timer']:
-        weechat.unhook(trivial['main_timer'])
-    Show_Awards(winner)
-    Register_Question(winner)
-    Show_Session_Awards(winner)
-    interval = int(MyOpt('wait_time'))
-    weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', '')
 
 def Wait_Next_Round_cb(data, remaining_calls):
-    global trivial
-    Main_Timer()
+    global MyTriv
+    MyTriv.Main_Timer()
     return weechat.WEECHAT_RC_OK
-
-def Show_Awards(winner):
-    global trivial
-    weechat.command(trivial['buffer_ptr'], 'Puntos conseguidos por %s: %d' % (winner, trivial['reward']))
-
-
-def Show_Session_Awards(winner):
-    global trivial
-    id_session = Check_Session_db()
-    id_user = Check_Nick_db(winner)
-    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
-    conn.text_factory = str
-    c = conn.cursor()
-    c.execute('select sum(points_won) from session_questions where id_session=? and id_user=?', (id_session, id_user))
-    points = str(c.fetchone()[0])
-    conn.close()
-    weechat.command(trivial['buffer_ptr'], 'Puntos de hoy por %s: %s' % (winner, points))
-
-
-def Register_Question(winner = False):
-    global trivial
-    id_session = Check_Session_db()
-    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
-    conn.text_factory = str
-    c = conn.cursor()
-    if id_session:
-        id_question = trivial['question'][-1]
-        datetime_str = str(datetime.now())
-        points_won = trivial['reward']
-        if not winner:
-            try:
-                c.execute('insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)', (datetime_str, id_session, id_question, points_won))
-                conn.commit()
-            except:
-                pass
-        else:
-            id_user = Check_Nick_db(winner)
-            if id_user:
-                try:
-                    c.execute('insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)', (datetime_str, id_session, id_question, id_user, points_won))
-                    conn.commit()
-                except:
-                    pass
-            else:
-                # if error do nothing
-                pass
-    else:
-        # if error do nothing
-        pass
-    conn.close()
-
-def Check_Nick_db(nick):
-    global trivial
-    server = MyOpt('server')
-    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
-    conn.text_factory = str
-    c = conn.cursor()
-    c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
-    result = c.fetchone()
-    if result[0] < 1:
-        try:
-            c.execute('insert into users (nick, server) values (?,?)', (nick, server))
-            conn.commit()
-            c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
-            result = c.fetchone()
-        except:
-            pass
-    conn.close()
-    if result[0] > 0:
-        return int(result[1])
-    else:
-        return False
-
-def Check_Session_db():
-    server = MyOpt('server')
-    date_str = str(datetime.now().date())
-    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
-    conn.text_factory = str
-    c = conn.cursor()
-    c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
-    result = c.fetchone()
-    if result[0] < 1:
-        try:
-            c.execute('insert into sessions (date, server) values (?,?)', (date_str, server))
-            conn.commit()
-            c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
-            result = c.fetchone()
-        except:
-            pass
-    conn.close()
-    if result[0] > 0:
-        return int(result[1])
-    else:
-        return False
-
-def Show_Question():
-    global trivial
-    theme = u'\x03' + '12' + trivial['question'][2] + u'\x0f'
-    question = u'\x02' + trivial['question'][0] + u'\x0f'
-    answer = trivial['question'][1]
-    weechat.command(trivial['buffer_ptr'], '%s : %s' %(theme, question))
-
-def Show_Tips():
-    global trivial
-    if trivial['state'] == 1:
-        answer = ''
-        for word in trivial['question'][1]:
-            if word != ' ':
-                answer = answer + '*'
-            else:
-                answer = answer + ' '
-    elif trivial['state'] == 2:
-        answer = ''
-        count = 0
-        for word in trivial['question'][1]:
-            if count < 3:
-                answer = answer + word
-                count = count + 1
-            else:
-                if word != ' ':
-                    answer = answer + '*'
-                else:
-                    answer = answer + ' '
-    elif trivial['state'] == 3:
-        answer = ''
-        count = 0
-        constraints = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ'
-        for word in trivial['question'][1]:
-            if count < 3:
-                answer = answer + word
-                count = count + 1
-            else:
-                if word != ' ':
-                    if word not in constraints:
-                        answer = answer + word
-                    else:
-                        answer = answer + '*'
-                else:
-                    answer = answer + ' '
-    weechat.command(trivial['buffer_ptr'], u'\x03' + '12' + 'Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f')
-
-def Show_Rewards():
-    global trivial
-    trivial['reward'] = int(MyOpt('reward')) / trivial['state']
-    reward = u'\x03' + '06' + str(trivial['reward']) + u'\x0f'
-    points = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
-    weechat.command(trivial['buffer_ptr'], '%s %s' % (points, reward))
-
-def Points_To_Pot():
-    pass
-
-def Fetch_Question():
-    global trivial
-    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
-    conn.text_factory = str
-    c = conn.cursor()
-    c.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
-    trivial['question'] = c.fetchone()
-    conn.close
-
-def Load_Game():
-    global trivial
-    server = MyOpt('server')
-    room = MyOpt('room')
-    trivial['buffer_ptr'] = weechat.buffer_search('irc','%s.%s' %(server, room))
-    weechat.prnt('', 'hit: %s %s %s' %(str(trivial['buffer_ptr']), server, room))
-    if not trivial.has_key('running'):
-        trivial['running'] = False
-
-def Start_Listener():
-    global trivial
-    trivial['listener_hook'] = weechat.hook_print(trivial['buffer_ptr'], 'irc_privmsg', '', 1, 'Check_message_cb', '')
-
-def Stop_Listener():
-    global trivial
-    weechat.unhook(trivial['listener_hook'])
 
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
-    global trivial
-    weechat.prnt('', 'a: %s' % prefix)
-    weechat.prnt('', 'b: %s' % str(trivial['buffer_ptr']))
-    nick = Check_Nick(prefix)
-    if trivial['running'] == True:
-        if message.lower() == trivial['question'][1].lower():
-            Winner(nick)
-        elif message.lower() == '!trivial stop'.lower() and Is_Admin(nick):
-            Stop_Game()
+    global MyTriv
+    nick = MyTriv.Check_Nick(prefix)
+    if MyTriv.running == True:
+        if message.lower() == MyTriv.answer.lower():
+            MyTriv.Winner(nick)
+        elif message.lower() == '!trivial stop'.lower() and MyTriv.Is_Admin(nick):
+            MyTriv.Stop_Game()
     else:
-        if message.lower() == '!trivial start'.lower() and Is_Admin(nick):
-            Start_Game()
+        if message.lower() == '!trivial start'.lower() and MyTriv.Is_Admin(nick):
+            MyTriv.Start_Game()
     return weechat.WEECHAT_RC_OK
 
-def Check_Nick(prefix):
-    global trivial
-    if weechat.nicklist_search_nick(trivial['buffer_ptr'], '', prefix):
-        weechat.prnt('', prefix)
-        return prefix
-    else:
-        wildcards = '+@'
-        if prefix[0] in wildcards:
-            if weechat.nicklist_search_nick(trivial['buffer_ptr'], '', prefix[1:]):
-                weechat.prnt('', prefix)
-                return prefix[1:]
-
-def Is_Admin(nick):
-    nicklist = MyOpt('admin_nicks').split(',')
-    nicklist = [nick_ad.strip(' ') for nick_ad in nicklist]
-    if nick in nicklist:
-        return True
-    else:
-        return False
-
-def MyOpt(option):
-    value = weechat.config_get_plugin(option)
-    return value
-
 ### End plugin functions
+
 
 ### Main procedure
 def main():
@@ -396,9 +386,9 @@ def main():
     options = {
         'server'        : 'hispano',
         'room'          : '#dnb_&_jungle',
-        'time_interval' : '20',
+        'time_interval' : '10',
         'wait_time'     : '5',
-        'header_time'   : '10',
+        'header_time'   : '5',
         'trivial_path'  : '/home/manuel/.weechat_trivial/python',
         'trivial_db'    : 'trivialbot.db',
         'reward'        : '25000',
@@ -412,8 +402,6 @@ def main():
     config_hook()
 
     # create command
-    global trivial
-    trivial = {}
     main_command = {
         'command'           : 'trivial',
         'description'       : 'trivial bot for weechat',
@@ -424,8 +412,10 @@ def main():
         'callback_data'     : ''
         }
     AddCommand(main_command)
-    Load_Game()
-    Start_Listener()
+
+    global MyTriv
+    MyTriv = TrivialRoom('#dnb_&_jungle', 'hispano')
+    MyTriv.Start_Listener()
 
 if __name__ == '__main__':
     main()
