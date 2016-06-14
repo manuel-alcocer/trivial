@@ -76,12 +76,12 @@ def my_trivial_cb(data, buffer, args):
     return weechat.WEECHAT_RC_OK
 
 def Start_Game():
-    global trivial, OPTS
+    global trivial
     Load_Game()
     weechat.prnt('', 'Trivial started')
     trivial['state'] = 0
     # set first question in 10 seconds
-    interval = int(OPTS['plugin_options']['header_time'])
+    interval = int(MyOpt('header_time'))
     Main_Timer(interval,1)
 
 def Stop_Game():
@@ -92,9 +92,9 @@ def Stop_Game():
     weechat.prnt('', 'Trivial stopped')
 
 def Main_Timer(interval=False, maxcalls=False):
-    global trivial, OPTS
+    global trivial
     if not interval:
-        interval = int(OPTS['plugin_options']['time_interval'])
+        interval = int(MyOpt('time_interval'))
     if not maxcalls:
         maxcalls = 4
     trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', '')
@@ -137,23 +137,23 @@ def Third_State():
     Show_Tips()
 
 def No_Winner():
-    global trivial, OPTS
+    global trivial
     trivial['state'] = 0
-    trivial['reward'] = OPTS['plugin_options']['reward']
+    trivial['reward'] = MyOpt('reward')
     weechat.command(trivial['buffer_ptr'], 'no hubo aciertos')
     Register_Question()
     Points_To_Pot()
     Main_Timer()
 
 def Winner(winner):
-    global trivial, OPTS
+    global trivial
     trivial['state'] = 0
     if trivial['main_timer']:
         weechat.unhook(trivial['main_timer'])
     Show_Awards(winner)
     Register_Question(winner)
     Show_Session_Awards(winner)
-    interval = int(OPTS['plugin_options']['wait_time'])
+    interval = int(MyOpt('wait_time'))
     weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', '')
 
 def Wait_Next_Round_cb(data, remaining_calls):
@@ -167,10 +167,10 @@ def Show_Awards(winner):
 
 
 def Show_Session_Awards(winner):
-    global trivial, OPTS
+    global trivial
     id_session = Check_Session_db()
     id_user = Check_Nick_db(winner)
-    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
     conn.text_factory = str
     c = conn.cursor()
     c.execute('select sum(points_won) from session_questions where id_session=? and id_user=?', (id_session, id_user))
@@ -180,9 +180,9 @@ def Show_Session_Awards(winner):
 
 
 def Register_Question(winner = False):
-    global trivial, OPTS
+    global trivial
     id_session = Check_Session_db()
-    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
     conn.text_factory = str
     c = conn.cursor()
     if id_session:
@@ -212,9 +212,9 @@ def Register_Question(winner = False):
     conn.close()
 
 def Check_Nick_db(nick):
-    global trivial, OPTS
-    server = OPTS['plugin_options']['server']
-    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    global trivial
+    server = MyOpt('server')
+    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
     conn.text_factory = str
     c = conn.cursor()
     c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
@@ -234,10 +234,9 @@ def Check_Nick_db(nick):
         return False
 
 def Check_Session_db():
-    global OPTS
-    server = OPTS['plugin_options']['server']
+    server = MyOpt('server')
     date_str = str(datetime.now().date())
-    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
     conn.text_factory = str
     c = conn.cursor()
     c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
@@ -303,8 +302,8 @@ def Show_Tips():
     weechat.command(trivial['buffer_ptr'], u'\x03' + '12' + 'Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f')
 
 def Show_Rewards():
-    global trivial, OPTS
-    trivial['reward'] = int(OPTS['plugin_options']['reward']) / trivial['state']
+    global trivial
+    trivial['reward'] = int(MyOpt('reward')) / trivial['state']
     reward = u'\x03' + '06' + str(trivial['reward']) + u'\x0f'
     points = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
     weechat.command(trivial['buffer_ptr'], '%s %s' % (points, reward))
@@ -313,8 +312,8 @@ def Points_To_Pot():
     pass
 
 def Fetch_Question():
-    global trivial, OPTS
-    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    global trivial
+    conn = sqlite3.connect(MyOpt('trivial_path') + '/' + MyOpt('trivial_db'))
     conn.text_factory = str
     c = conn.cursor()
     c.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
@@ -322,9 +321,11 @@ def Fetch_Question():
     conn.close
 
 def Load_Game():
-    global trivial,OPTS
-    trivial['buffer_ptr'] = weechat.buffer_search('irc','%s.%s' %(OPTS['plugin_options']['server'], OPTS['plugin_options']['room']))
-    weechat.prnt('', 'hit: %s %s %s' %(str(trivial['buffer_ptr']), OPTS['plugin_options']['server'], OPTS['plugin_options']['room']))
+    global trivial
+    server = MyOpt('server')
+    room = MyOpt('room')
+    trivial['buffer_ptr'] = weechat.buffer_search('irc','%s.%s' %(server, room))
+    weechat.prnt('', 'hit: %s %s %s' %(str(trivial['buffer_ptr']), server, room))
     if not trivial.has_key('running'):
         trivial['running'] = False
 
@@ -364,13 +365,16 @@ def Check_Nick(prefix):
                 return prefix[1:]
 
 def Is_Admin(nick):
-    global OPTS
-    nicklist = OPTS['plugin_options']['admin_nicks'].split(',')
+    nicklist = MyOpt('admin_nicks').split(',')
     nicklist = [nick_ad.strip(' ') for nick_ad in nicklist]
     if nick in nicklist:
         return True
     else:
         return False
+
+def MyOpt(option):
+    value = weechat.config_get_plugin(option)
+    return value
 
 ### End plugin functions
 
