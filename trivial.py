@@ -321,8 +321,9 @@ def Fetch_Question():
     conn.close
 
 def Load_Game():
-    global trivial
-    trivial['buffer_ptr'] = weechat.buffer_search('irc','%s.%s' %(weechat.config_get_plugin('server'), weechat.config_get_plugin('room')))
+    global trivial,OPTS
+    trivial['buffer_ptr'] = weechat.buffer_search('irc','%s.%s' %(OPTS['plugin_options']['server']), OPTS['plugin_options']['room']))
+    weechat.prnt('', 'hit: %s %s %s' %(str(trivial['buffer_ptr'], OPTS['plugin_options']['server']), OPTS['plugin_options']['room'])))
     if not trivial.has_key('running'):
         trivial['running'] = False
 
