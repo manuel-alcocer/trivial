@@ -77,6 +77,7 @@ def my_trivial_cb(data, buffer, args):
 
 def Start_Game():
     global trivial, OPTS
+    Load_Game()
     weechat.prnt('', 'Trivial started')
     trivial['state'] = 0
     # set first question in 10 seconds
