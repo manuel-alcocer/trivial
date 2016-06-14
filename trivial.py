@@ -260,7 +260,7 @@ def Show_Question():
     theme = u'\x03' + '12' + trivial['question'][2] + u'\x0f'
     question = u'\x02' + trivial['question'][0] + u'\x0f'
     answer = trivial['question'][1]
-    weechat.command(trivial['buffer_ptr'], '%s : %s (%s)' %(theme, question, answer))
+    weechat.command(trivial['buffer_ptr'], '%s : %s' %(theme, question))
 
 def Show_Tips():
     global trivial
