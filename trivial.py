@@ -114,7 +114,7 @@ class TrivialRoom:
         id_session = self.Check_Session_db()
         id_question = self.qid
         datetime_str = str(datetime.now())
-        points_won = self.opts['reward']
+        points_won = self.trivial['reward']
         if not winner:
             values = (datetime_str, id_session, id_question, points_won)
             insert = 'insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)'
@@ -300,8 +300,8 @@ class TrivialRoom:
         weechat.command(self.buffer_ptr, tip_msg)
 
     def Show_Rewards(self):
-        reward = int(self.opts['reward']) / self.trivial['state']
-        reward_str = u'\x03' + '06' + str(reward) + u'\x0f'
+        self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
+        reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
 
@@ -429,8 +429,8 @@ def main():
     # Setting default options for script
     global options
     options = {
-        'server'        : 'hispano',
-        'room'          : '#dnb_&_jungle',
+        'server'        : 'freenode',
+        'room'          : '#birras',
         'time_interval' : '20',
         'wait_time'     : '5',
         'header_time'   : '5',
