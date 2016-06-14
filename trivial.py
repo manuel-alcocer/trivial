@@ -244,7 +244,7 @@ class TrivialRoom:
         pass
 
     def Show_Awards(self, winner):
-        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner, self.opts['reward']))
+        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner, self.trivial['reward']))
 
     def Show_Session_Awards(self, winner):
         id_session = self.Check_Session_db()
