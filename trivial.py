@@ -38,6 +38,7 @@ class TrivialRoom:
                     #==================#
 
     def Start_Listener(self):
+        my = self
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', '')
 
     def Stop_Listener(self):
@@ -138,6 +139,7 @@ class TrivialRoom:
         if not maxcalls:
             maxcalls = 4
         try:
+            ##                                                                              WWWW
             self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', '')
         except:
             weechat.prnt('', 'Error loading main main_timer on Main_Timer')
@@ -146,6 +148,7 @@ class TrivialRoom:
         weechat.prnt('', 'Trivial started')
         self.trivial['state'] = 0
         # set first question in 10 seconds
+        self.Show_First_Header()
         interval = int(self.opts['header_time'])
         self.Main_Timer(interval,1)
 
@@ -162,33 +165,36 @@ class TrivialRoom:
         self.conn.close()
 
     def Show_Question(self):
-        theme = u'\x03' + '12' + self.theme + u'\x0f'
-        question = u'\x02' + self.question + u'\x0f'
+        theme = u'\x03' + '12 ' + self.theme + u'\x0f'
+        question = u'\x02 ' + self.question + u'\x0f'
         answer = self.answer
-        weechat.command(self.buffer_ptr, '%s : %s (%s)' %(theme, question, answer))
+        weechat.command(self.buffer_ptr, '%s : %s' %(theme, question))
+        weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
+
+    def Show_First_Header(self):
+        weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
 
     def First_State(self):
         self.trivial['state'] = 1
         self.Fetch_Question()
         self.Show_Question()
-        self.Show_Rewards()
         self.Show_Tips()
+        self.Show_Rewards()
 
     def Second_State(self):
         self.trivial['state'] = 2
-        self.Show_Question()
-        self.Show_Rewards()
         self.Show_Tips()
+        self.Show_Rewards()
 
     def Third_State(self):
         self.trivial['state'] = 3
         self.Show_Question()
-        self.Show_Rewards()
         self.Show_Tips()
+        self.Show_Rewards()
 
     def No_Winner(self):
         self.trivial['state'] = 0
-        weechat.command(self.buffer_ptr, 'no hubo aciertos')
+        self.Show_Answer()
         self.Register_Question()
         self.Points_To_Pot()
         self.Main_Timer()
@@ -200,8 +206,45 @@ class TrivialRoom:
         self.Show_Awards(winner)
         self.Register_Question(winner)
         self.Show_Session_Awards(winner)
+        self.Show_Ranking()
         interval = int(self.opts['wait_time'])
         weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', '')
+
+    def Show_Answer(self):
+        answer_str = u'\x03' + '12' + 'La respuesta era: ' + u'\x0f'
+        answer = u'\x02' + self.answer + u'\x0f'
+        weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
+
+    def Show_Ranking(self):
+        self.ranking = []
+        id_session = self.Check_Session_db()
+        self.OpenDB()
+        select = '''select u.nick, sum(sq.points_won) as points from users u,
+                    session_questions sq,
+                    sessions s
+                    where sq.id_user = u.id
+                    and  sq.id_session = s.id
+                    and s.server = (select server from sessions where id = ? )
+                    group by sq.id_user
+                    order by points
+                    limit 10'''
+        self.cur.execute(select, (id_session,))
+        self.ranking = self.cur.fetchall()
+        self.conn.close()
+        weechat.prnt('', str(len(self.ranking)))
+        count = 1
+        self.Show_Ranking_Header()
+        total_str = ''
+        for nick_stat in self.ranking:
+            number_str = u'\x03' + '8 ' + str(count) + ': ' + u'\x0f'
+            nick_str = u'\x03' + '6' + nick_stat[0] + u'\x0f'
+            points_str = u'\x03' '9' + ' (' + u'\x0f' + u'\x03' + '6 ' + str(nick_stat[1]) + u'\x0f' + u'\x03' '9' + ' )' + u'\x0f'
+            total_str = total_str + number_str + nick_str + points_str
+            count = count + 1
+        weechat.command(self.buffer_ptr, total_str)
+
+    def Show_Ranking_Header(self):
+        pass
 
     def Show_Awards(self, winner):
         weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner, self.opts['reward']))
@@ -386,14 +429,15 @@ def main():
     options = {
         'server'        : 'hispano',
         'room'          : '#dnb_&_jungle',
-        'time_interval' : '10',
+        'time_interval' : '20',
         'wait_time'     : '5',
         'header_time'   : '5',
         'trivial_path'  : '/home/manuel/.weechat_trivial/python',
         'trivial_db'    : 'trivialbot.db',
         'reward'        : '25000',
         'pot'           : '1',
-        'admin_nicks'   : 'z0idberg'
+        'admin_nicks'   : 'z0idberg',
+        'monitor_questions' : '1'
         }
     set_default_options(options)
 
