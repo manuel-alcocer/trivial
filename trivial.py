@@ -336,6 +336,8 @@ def Stop_Listener():
 
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
     global trivial
+    weechat.prnt('', 'a: %s' % prefix)
+    weechat.prnt('', 'b: %s' % str(trivial['buffer_ptr']))
     nick = Check_Nick(prefix)
     if trivial['running'] == True:
         if message.lower() == trivial['question'][1].lower():
