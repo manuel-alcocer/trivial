@@ -14,7 +14,7 @@ class TrivialRoom:
                     # OPTIONS SETTINGS #
                     #==================#
 
-    def __init__(self, room, server):
+    def __init__(self):
         self.running = False
         self.trivial = {}
         self.Load_Vars()
