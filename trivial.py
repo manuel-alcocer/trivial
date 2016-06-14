@@ -181,32 +181,28 @@ def Show_Session_Awards(winner):
 def Register_Question(winner = False):
     global trivial, OPTS
     id_session = Check_Session_db()
+    conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
+    conn.text_factory = str
+    c = conn.cursor()
     if id_session:
         id_question = trivial['question'][-1]
         datetime_str = str(datetime.now())
         points_won = trivial['reward']
         if not winner:
-            conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
-            conn.text_factory = str
-            c = conn.cursor()
             c.execute('insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)', (datetime_str, id_session, id_question, points_won))
             conn.commit()
-            conn.close()
         else:
             id_user = Check_Nick_db(winner)
             if id_user:
-                conn = sqlite3.connect(OPTS['plugin_options']['trivial_path'] + '/' + OPTS['plugin_options']['trivial_db'])
-                conn.text_factory = str
-                c = conn.cursor()
                 c.execute('insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)', (datetime_str, id_session, id_question, id_user, points_won))
                 conn.commit()
-                conn.close()
             else:
                 # if error do nothing
                 pass
     else:
         # if error do nothing
         pass
+    conn.close()
 
 def Check_Nick_db(nick):
     global trivial, OPTS
@@ -342,11 +338,13 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
 def Check_Nick(prefix):
     global trivial
     if weechat.nicklist_search_nick(trivial['buffer_ptr'], '', prefix):
+        weechat.prnt('', prefix)
         return prefix
     else:
         wildcards = '+@'
         if prefix[0] in wildcards:
             if weechat.nicklist_search_nick(trivial['buffer_ptr'], '', prefix[1:]):
+                weechat.prnt('', prefix)
                 return prefix[1:]
 
 def Is_Admin(nick):
