@@ -223,7 +223,7 @@ class TrivialRoom:
                     and  sq.id_session = s.id
                     and s.server = (select server from sessions where id = ? )
                     group by sq.id_user
-                    order by points
+                    order by points desc
                     limit 10'''
         self.cur.execute(select, (id_session,))
         self.ranking = self.cur.fetchall()
