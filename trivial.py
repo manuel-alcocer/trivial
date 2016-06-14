@@ -55,7 +55,7 @@ class TrivialRoom:
                     return prefix[1:]
 
     def Is_Admin(self, nick):
-        nicklist = self.admin_nicks.split(',')
+        nicklist = self.opts['admin_nicks'].split(',')
         nicklist = [nick_ad.strip(' ') for nick_ad in nicklist]
         if nick in nicklist:
             return True
