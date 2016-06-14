@@ -189,13 +189,19 @@ def Register_Question(winner = False):
         datetime_str = str(datetime.now())
         points_won = trivial['reward']
         if not winner:
-            c.execute('insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)', (datetime_str, id_session, id_question, points_won))
-            conn.commit()
+            try:
+                c.execute('insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)', (datetime_str, id_session, id_question, points_won))
+                conn.commit()
+            except:
+                pass
         else:
             id_user = Check_Nick_db(winner)
             if id_user:
-                c.execute('insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)', (datetime_str, id_session, id_question, id_user, points_won))
-                conn.commit()
+                try:
+                    c.execute('insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)', (datetime_str, id_session, id_question, id_user, points_won))
+                    conn.commit()
+                except:
+                    pass
             else:
                 # if error do nothing
                 pass
@@ -213,10 +219,13 @@ def Check_Nick_db(nick):
     c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
     result = c.fetchone()
     if result[0] < 1:
-        c.execute('insert into users (nick, server) values (?,?)', (nick, server))
-        conn.commit()
-        c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
-        result = c.fetchone()
+        try:
+            c.execute('insert into users (nick, server) values (?,?)', (nick, server))
+            conn.commit()
+            c.execute('select count(id), id from users where nick=? and server=?', (nick, server))
+            result = c.fetchone()
+        except:
+            pass
     conn.close()
     if result[0] > 0:
         return int(result[1])
@@ -233,10 +242,13 @@ def Check_Session_db():
     c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
     result = c.fetchone()
     if result[0] < 1:
-        c.execute('insert into sessions (date, server) values (?,?)', (date_str, server))
-        conn.commit()
-        c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
-        result = c.fetchone()
+        try:
+            c.execute('insert into sessions (date, server) values (?,?)', (date_str, server))
+            conn.commit()
+            c.execute('select count(id), id from sessions where date=? and server=?', (date_str, server))
+            result = c.fetchone()
+        except:
+            pass
     conn.close()
     if result[0] > 0:
         return int(result[1])
