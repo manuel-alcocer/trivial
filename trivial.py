@@ -247,12 +247,12 @@ def Check_Session_db():
     else:
         return False
 
-
 def Show_Question():
     global trivial
     theme = u'\x03' + '12' + trivial['question'][2] + u'\x0f'
     question = u'\x02' + trivial['question'][0] + u'\x0f'
-    weechat.command(trivial['buffer_ptr'], '%s : %s' %(theme, question))
+    answer = trivial['question'][1]
+    weechat.command(trivial['buffer_ptr'], '%s : %s (%s)' %(theme, question, answer))
 
 def Show_Tips():
     global trivial
