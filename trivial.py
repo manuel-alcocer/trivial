@@ -351,7 +351,7 @@ class Trivial:
         points = self.result[0]
         self.conn.close()
         winner_str = self.GiveColor(winner, 'yellow')
-        header = self.GiveColor('Puntos de hoy: ')
+        header = self.GiveColor('Puntos de hoy: ', 'cyan')
         points_str = self.GiveColor(str(points), 'magenta')
         arrows = self.GiveColor(' <<-- ', 'darkred')
         weechat.command(self.buffer_ptr, '%s %s %s %s' % (winner, arrows, header, points_str))
