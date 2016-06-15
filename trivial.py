@@ -66,9 +66,7 @@ class Trivial:
     def Load_Vars(self):
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = self.MyOpt('instance.' + self.TrivId + '.' + option)
-            self.Depurar(option + ' - ' + self.opts[option])
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
-        self.Depurar(str(self.buffer_ptr))
 
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
@@ -149,11 +147,15 @@ class Trivial:
 
     def Check_Nick_db(self, nick):
         values = (nick, self.opts['server'])
-        self.SelectOne('select count(id), id from users where nick=? and server=?', values)
+        select = '''select count(id), id
+                    from users
+                    where nick=?
+                    and server=?'''
+        self.SelectOne(select, values)
         if self.result[0] < 1:
             try:
                 self.InsertOne('insert into users (nick, server) values (?,?)', values)
-                self.SelectOne('select count(id), id from users where nick=? and server=?', values)
+                self.SelectOne(select, values)
             except:
                 weechat.prnt('', 'Error during insertion Nick on DB')
         if self.result[0] > 0:
@@ -168,10 +170,12 @@ class Trivial:
         points_won = self.trivial['reward']
         if not winner:
             values = (datetime_str, id_session, id_question, points_won)
-            insert = 'insert into session_questions (datetime, id_session, id_question, points_won) values (?,?,?,?)'
+            insert = '''insert into session_questions (datetime, id_session, id_question, points_won)
+                        values (?,?,?,?)'''
         else:
             id_user = self.Check_Nick_db(winner)
-            insert = 'insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)'
+            insert = '''insert into session_questions (datetime, id_session, id_question, id_user, points_won)
+                        values (?,?,?,?,?)'''
             values = (datetime_str, id_session, id_question, id_user, points_won)
         self.InsertOne(insert, values)
 
@@ -250,7 +254,12 @@ class Trivial:
 
     def Fetch_Question(self):
         self.OpenDB()
-        self.cur.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
+        select = '''select q.question, q.answer, t.theme, q.id
+                    from questions q, themes t
+                    where q.id_theme = t.id
+                    order by random()
+                    limit 1'''
+        self.cur.execute(select)
         self.question, self.answer, self.theme, self.qid = self.cur.fetchone()
         self.conn.close()
 
