@@ -70,7 +70,6 @@ class Trivial:
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
         self.Depurar(str(self.buffer_ptr))
 
-
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
         return value
@@ -88,9 +87,9 @@ class Trivial:
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
 
-                    #==============#
-                    # NICK METHODS #
-                    #==============#
+#==============#
+# NICK METHODS #
+#==============#
 
     def Check_Nick(self, prefix):
         if weechat.nicklist_search_nick(self.buffer_ptr, '', prefix):
@@ -205,21 +204,9 @@ class Trivial:
         weechat.prnt('', 'Trivial stopped')
         weechat.command(self.buffer_ptr, 'Trivial stopped')
 
-    def Fetch_Question(self):
-        self.OpenDB()
-        self.cur.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
-        self.question, self.answer, self.theme, self.qid = self.cur.fetchone()
-        self.conn.close()
-
-    def Show_Question(self):
-        theme = u'\x03' + '12 ' + self.theme + u'\x0f'
-        question = u'\x02 ' + self.question + u'\x0f'
-        answer = self.answer
-        weechat.command(self.buffer_ptr, '%s : %s' %(theme, question))
-        weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
-
-    def Show_First_Header(self):
-        weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
+#=============#
+# GAME STATES #
+#==============
 
     def First_State(self):
         self.trivial['state'] = 1
@@ -256,6 +243,30 @@ class Trivial:
         self.Show_Ranking()
         interval = int(self.opts['wait_time'])
         weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', self.TrivId)
+
+#==================#
+# QUESTION IN GAME #
+#==================#
+
+    def Fetch_Question(self):
+        self.OpenDB()
+        self.cur.execute('select q.question, q.answer, t.theme, q.id from questions q, themes t where q.id_theme = t.id order by random() limit 1')
+        self.question, self.answer, self.theme, self.qid = self.cur.fetchone()
+        self.conn.close()
+
+#=========#
+# BANNERS #
+#=========#
+
+    def Show_Question(self):
+        theme = u'\x03' + '12 ' + self.theme + u'\x0f'
+        question = u'\x02 ' + self.question + u'\x0f'
+        answer = self.answer
+        weechat.command(self.buffer_ptr, '%s : %s' %(theme, question))
+        weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
+
+    def Show_First_Header(self):
+        weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
 
     def Show_Answer(self):
         answer_str = u'\x03' + '12' + 'La respuesta era: ' + u'\x0f'
@@ -307,9 +318,6 @@ class Trivial:
         self.conn.close()
         weechat.command(self.buffer_ptr, 'Puntos de hoy por %s: %s' % (winner, points))
 
-    def Points_To_Pot(self):
-        pass
-
     def Show_Tips(self):
         if self.trivial['state'] == 1:
             answer = ''
@@ -354,6 +362,13 @@ class Trivial:
         reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
+
+#=======================#
+# (TODO) POT MANAGEMENT #
+#=======================#
+
+    def Points_To_Pot(self):
+        pass
 
 ### REGISTER SCRIPT
 def Register():
@@ -414,7 +429,6 @@ def reload_options_cb(data, option, value):
 
 def config_hook():
     weechat.hook_config('plugins.var.python.' + TRIV['register']['script_name'] + '.*', 'reload_options_cb', '')
-### END OPTIONS
 
 ### CRITICAL CONF CHANGED
 def Stop_All_Instances():
@@ -427,6 +441,7 @@ def Free_All_Options():
 def Relaunch_Instances():
     LaunchInstances()
 ### END CRITICAL CONF CHANGED
+### END OPTIONS
 
 ### LAUNCH INSTANCES
 def LaunchInstances():
