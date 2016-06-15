@@ -239,6 +239,7 @@ class Trivial:
         self.Main_Timer()
 
     def Winner(self, winner):
+        self.Show_Answer()
         self.trivial['state'] = 0
         if self.trivial['main_timer']:
             weechat.unhook(self.trivial['main_timer'])
@@ -290,7 +291,7 @@ class Trivial:
         weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
 
     def Show_Answer(self):
-        answer_str = u'\x03' + '12' + 'La respuesta era: ' + u'\x0f'
+        answer_str = self.GiveColor('La respuesta era: ', 'blue')
         answer = u'\x02' + self.answer + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
 
@@ -330,8 +331,12 @@ class Trivial:
 
     def Show_Awards(self, winner):
         reward = self.trivial['reward']
-        winner_str = self.GiveColor(winner, 'yellow')
-        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner_str, self.trivial['reward']))
+        winner_str = self.GiveColor(winner, 'green')
+        congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
+        action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
+        weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner, action))
+        points_str = self.GiveColor('Puntos conseguidos:', 'magenta')
+        weechat.command(self.buffer_ptr, '%s %s' % (points_str, self.trivial['reward']))
 
     def Show_Session_Awards(self, winner):
         id_session = self.Check_Session_db()
