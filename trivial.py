@@ -19,14 +19,14 @@ TRIV['default_instance_options'] = {
     'time_interval' : '20',
     'wait_time'     : '5',
     'header_time'   : '5',
-    'trivial_path'  : '/home/manuel/.weechat_trivial/python',
+    'trivial_path'  : '/home/manuel/.weechat/python',
     'trivial_db'    : 'trivialbot.db',
     'reward'        : '25000',
     'pot'           : '1',
     'admin_nicks'   : 'z0idberg',
     'cmd_prefix'    : '#',
     'room'          : '',
-    'server'        : ''
+    'server'        : 'hispano'
     }
 
 # Register script
@@ -271,7 +271,7 @@ class Trivial:
         theme = u'\x03' + '12 ' + self.theme + u'\x0f'
         question = u'\x02 ' + self.question + u'\x0f'
         answer = self.answer
-        q_id = u'\x03' + '05' + '[ ' + u'\x03' + '07' + ' %s ' % str(self.qid) + u'\x03' + '05' + ' ]' + u'\x0f'
+        q_id = u'\x03' + '05' + '[' + u'\x03' + '07' + ' preg.%s ' % str(self.qid) + u'\x03' + '05' + ']' + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s : %s' %(q_id, theme, question))
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
