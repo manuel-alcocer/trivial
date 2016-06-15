@@ -375,7 +375,7 @@ class Trivial:
         reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         separator = u'\x03' + '05' + ' <== ' + u'\x0f'
-        weechat.command(self.buffer_ptr, tip_msg + separator + points_str)
+        weechat.command(self.buffer_ptr, tip_msg + separator + points_str + ' ' + reward_str)
 
     def Show_Rewards(self):
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
