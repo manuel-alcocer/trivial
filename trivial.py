@@ -331,7 +331,7 @@ class Trivial:
 
     def Show_Awards(self, winner):
         reward = self.trivial['reward']
-        winner_str = self.GiveColor(winner, 'green')
+        winner_str = self.GiveColor(winner, 'darkgreen')
         congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
         action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
         weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner, action))
