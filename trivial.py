@@ -271,7 +271,8 @@ class Trivial:
         theme = u'\x03' + '12 ' + self.theme + u'\x0f'
         question = u'\x02 ' + self.question + u'\x0f'
         answer = self.answer
-        weechat.command(self.buffer_ptr, '%s : %s' %(theme, question))
+        q_id = u'\x03' + '05' + '[ ' + u'\x03' + '07' + ' %s ' % str(self.qid) + u'\x03' + '05' + ' ]' + u'\x0f'
+        weechat.command(self.buffer_ptr, '%s %s : %s' %(q_id, theme, question))
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
     def Show_First_Header(self):
@@ -370,12 +371,13 @@ class Trivial:
                             answer = answer + '*'
                     else:
                         answer = answer + ' '
-        tip_msg = u'\x03' + '12' + ' ' + state + 'a. Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
+        tip_msg = u'\x03' + '12' + ' ' + state + 'ª Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
         reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         separator = u'\x03' + '05' + ' <== ' + u'\x0f'
-        weechat.command(self.buffer_ptr, tip_msg + separator + points_str + ' ' + reward_str)
+        space = '    '
+        weechat.command(self.buffer_ptr, tip_msg + space + separator + points_str + ' ' + reward_str)
 
     def Show_Rewards(self):
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
