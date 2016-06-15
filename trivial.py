@@ -217,18 +217,18 @@ class Trivial:
         self.Fetch_Question()
         self.Show_Question()
         self.Show_Tips()
-        self.Show_Rewards()
+        #self.Show_Rewards()
 
     def Second_State(self):
         self.trivial['state'] = 2
         self.Show_Tips()
-        self.Show_Rewards()
+        #self.Show_Rewards()
 
     def Third_State(self):
         self.trivial['state'] = 3
         self.Show_Question()
         self.Show_Tips()
-        self.Show_Rewards()
+        #self.Show_Rewards()
 
     def No_Winner(self):
         self.trivial['state'] = 0
@@ -334,6 +334,7 @@ class Trivial:
         weechat.command(self.buffer_ptr, 'Puntos de hoy por %s: %s' % (winner, points))
 
     def Show_Tips(self):
+        state = self.trivial['state']
         if self.trivial['state'] == 1:
             answer = ''
             for word in self.answer:
@@ -369,8 +370,12 @@ class Trivial:
                             answer = answer + '*'
                     else:
                         answer = answer + ' '
-        tip_msg = u'\x03' + '12' + 'Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
-        weechat.command(self.buffer_ptr, tip_msg)
+        tip_msg = u'\x03' + '12' + ' ' + state + 'a. Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
+        self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
+        reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
+        points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
+        separator = u'\x03' + '05' + ' <== ' + u'\x0f'
+        weechat.command(self.buffer_ptr, tip_msg + separator + points_str)
 
     def Show_Rewards(self):
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
@@ -471,17 +476,34 @@ def LaunchInstances():
     TRIV['config_hook'] = config_hook()
 ### END INSTANCES
 
+### MAIN CONFIG MENU
+def Main_Config_Menu():
+    TRIV['conf_buffer'] = weechat.buffer_new('trivial', 'buffer_conf_cb', '',
+                            'close_callback_cb', '')
+    weechat.prnt('', str(TRIV['conf_buffer']))
+
+def buffer_conf_cb():
+    pass
+    return weechat.WEECHAT_RC_OK
+
+def close_callback_cb():
+    pass
+    return weechat.WEECHAT_RC_OK
+### END MAIN CONFIG MENU
+
 ### TRIVIAL CALLBACK FUNCTIONS
 def my_trivial_cb(data, buffer, args):
     params = args.split(' ')
     if len(params) == 2:
-        if params[0] == 'start':
+        if params[0].lower() == 'start':
             TRIV['instances']['launched'][params[1]].Start_Game()
-        elif params[0] == 'stop':
+        elif params[0].lower() == 'stop':
             TRIV['instances']['launched'][params[1]].Stop_Game()
         else:
             # do nothing
-            weechat.prnt('', str(params))
+            pass
+    elif params[0].lower() == 'config':
+        Main_Config_Menu()
     return weechat.WEECHAT_RC_OK
 
 def Run_Game_cb(data, remaining_calls):
@@ -508,10 +530,10 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
     if TRIV['instances']['launched'][data].running == True and TRIV['instances']['launched'][data].trivial['state'] != 0:
         if message.lower() == TRIV['instances']['launched'][data].answer.lower():
             TRIV['instances']['launched'][data].Winner(nick)
-        elif message.lower() == cmd_prefix + 'trivial stop'.lower() and TRIV['instances']['launched'][data].Is_Admin(nick):
+        elif message.lower() == cmd_prefix + 'trivial stop' and TRIV['instances']['launched'][data].Is_Admin(nick):
             TRIV['instances']['launched'][data].Stop_Game()
     else:
-        if message.lower() == cmd_prefix + 'trivial start'.lower() and TRIV['instances']['launched'][data].Is_Admin(nick):
+        if message.lower() == cmd_prefix + 'trivial start' and TRIV['instances']['launched'][data].Is_Admin(nick):
             TRIV['instances']['launched'][data].Start_Game()
     return weechat.WEECHAT_RC_OK
 ### END CALLBACK FUNCTIONS
