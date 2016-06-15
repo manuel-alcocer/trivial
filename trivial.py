@@ -330,7 +330,7 @@ class Trivial:
         pass
 
     def Show_Awards(self, winner):
-        reward = self.GiveColor(self.trivial['reward'], 'lightblue')
+        reward = self.GiveColor(str(self.trivial['reward']), 'lightblue')
         winner_str = self.GiveColor(winner, 'darkgreen')
         congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
         action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
