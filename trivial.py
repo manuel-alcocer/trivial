@@ -133,9 +133,9 @@ class Trivial:
         values = (date_str, self.opts['server'], self.opts['room'])
         select = '''select count(id), id
                     from sessions
-                    where date=?
-                    and server=?
-                    and room=?'''
+                    where date = ?
+                    and server = ?
+                    and room = ?'''
         self.SelectOne(select, values)
         if self.result[0] < 1:
             self.InsertOne('insert into sessions (date, server, room) values (?,?,?)', values)
@@ -149,8 +149,8 @@ class Trivial:
         values = (nick, self.opts['server'])
         select = '''select count(id), id
                     from users
-                    where nick=?
-                    and server=?'''
+                    where nick = ?
+                    and server = ?'''
         self.SelectOne(select, values)
         if self.result[0] < 1:
             try:
@@ -286,12 +286,15 @@ class Trivial:
         self.ranking = []
         id_session = self.Check_Session_db()
         self.OpenDB()
-        select = '''select u.nick, sum(sq.points_won) as points from users u,
-                    session_questions sq,
-                    sessions s
+        select = '''select u.nick, sum(sq.points_won) as points
+                    from users u, session_questions sq, sessions s
                     where sq.id_user = u.id
                     and sq.id_session = s.id
-                    and s.server = (select server from sessions where id = ? )
+                    and s.server = (
+                                    select server
+                                    from sessions
+                                    where id = ?
+                                    )
                     group by sq.id_user
                     order by points desc
                     limit 10'''
@@ -321,7 +324,10 @@ class Trivial:
         id_user = self.Check_Nick_db(winner)
         values = (id_session, id_user)
         self.OpenDB()
-        select = 'select sum(points_won) from session_questions where id_session=? and id_user=?'
+        select = '''select sum(points_won)
+                    from session_questions
+                    where id_session = ?
+                    and id_user = ?'''
         self.SelectOne(select, values)
         points = self.result[0]
         self.conn.close()
