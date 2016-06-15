@@ -334,7 +334,7 @@ class Trivial:
         winner_str = self.GiveColor(winner, 'darkgreen')
         congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
         action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
-        weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner, action))
+        weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner_str, action))
         points_str = self.GiveColor('Puntos conseguidos:', 'magenta')
         weechat.command(self.buffer_ptr, '%s %s' % (points_str, self.trivial['reward']))
 
@@ -350,7 +350,11 @@ class Trivial:
         self.SelectOne(select, values)
         points = self.result[0]
         self.conn.close()
-        weechat.command(self.buffer_ptr, 'Puntos de hoy por %s: %s' % (winner, points))
+        winner_str = self.GiveColor(winner, 'yellow')
+        header = self.GiveColor('Puntos de hoy: ')
+        points_str = self.GiveColor(str(points), 'magenta')
+        arrows = self.GiveColor(' <<-- ', 'darkred')
+        weechat.command(self.buffer_ptr, '%s %s %s %s' % (winner, arrows, header, points_str))
 
     def Show_Tips(self):
         state = str(self.trivial['state'])
