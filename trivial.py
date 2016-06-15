@@ -291,7 +291,7 @@ class Trivial:
         weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
 
     def Show_Answer(self):
-        answer_str = self.GiveColor('La respuesta era: ', 'blue')
+        answer_str = self.GiveColor('La respuesta era: ', 'darkblue')
         answer = u'\x02' + self.answer + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
 
