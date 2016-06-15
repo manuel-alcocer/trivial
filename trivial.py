@@ -330,13 +330,13 @@ class Trivial:
         pass
 
     def Show_Awards(self, winner):
-        reward = self.trivial['reward']
+        reward = self.GiveColor(self.trivial['reward'], 'lightblue')
         winner_str = self.GiveColor(winner, 'darkgreen')
         congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
         action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
         weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner_str, action))
         points_str = self.GiveColor('Puntos conseguidos:', 'magenta')
-        weechat.command(self.buffer_ptr, '%s %s' % (points_str, self.trivial['reward']))
+        weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward))
 
     def Show_Session_Awards(self, winner):
         id_session = self.Check_Session_db()
@@ -354,7 +354,7 @@ class Trivial:
         header = self.GiveColor('Puntos de hoy: ', 'cyan')
         points_str = self.GiveColor(str(points), 'magenta')
         arrows = self.GiveColor(' <<-- ', 'darkred')
-        weechat.command(self.buffer_ptr, '%s %s %s %s' % (winner, arrows, header, points_str))
+        weechat.command(self.buffer_ptr, '%s %s %s %s' % (winner_str, arrows, header, points_str))
 
     def Show_Tips(self):
         state = str(self.trivial['state'])
