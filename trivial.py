@@ -9,10 +9,52 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
+global TRIV
+TRIV = {}
+TRIV['commands'] = {}
+TRIV['rc'] = {}
+TRIV['instances'] = { 'ids' : 'schranz,dnbjungle' }
+TRIV['instances']['launched'] = {}
+TRIV['default_instance_options'] = {
+    'time_interval' : '20',
+    'wait_time'     : '5',
+    'header_time'   : '5',
+    'trivial_path'  : '/home/manuel/.weechat_trivial/python',
+    'trivial_db'    : 'trivialbot.db',
+    'reward'        : '25000',
+    'pot'           : '1',
+    'admin_nicks'   : 'z0idberg',
+    'cmd_prefix'    : '#',
+    'room'          : '',
+    'server'        : ''
+    }
+
+# Register script
+TRIV['register'] = {
+    'script_name'       : 'trivial',
+    'author'            : 'nashgul <m.alcocer1978@gmail.com>',
+    'version'           : '0.1',
+    'license'           : 'beer-ware',
+    'description'       : 'trivial game for weechat',
+    'shutdown_function' : 'free_options_cb',
+    'charset'           : ''
+    }
+
+# create command
+TRIV['commands']['main'] = {
+    'command'           : 'trivial',
+    'description'       : 'trivial bot for weechat',
+    'args'              : '[start] | [stop]',
+    'args_description'  : '',
+    'completion'        : '',
+    'callback'          : 'my_trivial_cb',
+    'callback_data'     : ''
+    }
+
 class Trivial:
-                    #==================#
-                    # OPTIONS SETTINGS #
-                    #==================#
+#==================#
+# OPTIONS SETTINGS #
+#==================#
 
     def __init__(self, instance):
         self.TrivId = instance
@@ -24,7 +66,10 @@ class Trivial:
     def Load_Vars(self):
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = self.MyOpt('instance.' + self.TrivId + '.' + option)
+            self.Depurar(option + ' - ' + self.opts[option])
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
+        self.Depurar(str(self.buffer_ptr))
+
 
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
@@ -33,9 +78,9 @@ class Trivial:
     def Depurar(self, value):
         weechat.prnt('',str(value))
 
-                    #==================#
-                    # LISTENER METHODS #
-                    #==================#
+#==================#
+# LISTENER METHODS #
+#==================#
 
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
@@ -64,9 +109,9 @@ class Trivial:
         else:
             return False
 
-                    #=================#
-                    # SQLITE3 METHODS #
-                    #=================#
+#=================#
+# SQLITE3 METHODS #
+#=================#
 
     def OpenDB(self):
         self.dbpath = self.opts['trivial_path'] + '/' + self.opts['trivial_db']
@@ -131,9 +176,9 @@ class Trivial:
             values = (datetime_str, id_session, id_question, id_user, points_won)
         self.InsertOne(insert, values)
 
-                    #==============#
-                    # GAME METHODS #
-                    #==============#
+#==============#
+# GAME METHODS #
+#==============#
 
     def Main_Timer(self, interval=False, maxcalls=False):
         if not interval:
@@ -158,6 +203,7 @@ class Trivial:
             weechat.unhook(self.trivial['main_timer'])
         self.running = False
         weechat.prnt('', 'Trivial stopped')
+        weechat.command(self.buffer_ptr, 'Trivial stopped')
 
     def Fetch_Question(self):
         self.OpenDB()
@@ -310,22 +356,25 @@ class Trivial:
         weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
 
 ### REGISTER SCRIPT
-def Register(params):
-    for key, value in params.items():
-        TRIV['params'][key] = value
-    weechat.register(TRIV['params']['script_name'], TRIV['params']['author'],
-                     TRIV['params']['version'], TRIV['params']['license'],
-                     TRIV['params']['description'], TRIV['params']['shutdown_function'],
-                     TRIV['params']['charset'])
+def Register():
+    weechat.register(TRIV['register']['script_name'],
+                     TRIV['register']['author'],
+                     TRIV['register']['version'],
+                     TRIV['register']['license'],
+                     TRIV['register']['description'],
+                     TRIV['register']['shutdown_function'],
+                     TRIV['register']['charset'])
 ### END REGISTER SCRIPT
 
 ### REGISTER MAIN COMMAND
-def AddCommand(params):
-    hook = weechat.hook_command(params['command'], params['description'],
-                                params['args'], params['args_description'],
-                                params['completion'], params['callback'],
-                                params['callback_data'])
-    TRIV['commands'][params['command']] = hook
+def AddCommand():
+    TRIV['commands']['main']['hook'] = weechat.hook_command(TRIV['commands']['main']['command'],
+                                        TRIV['commands']['main']['description'],
+                                        TRIV['commands']['main']['args'],
+                                        TRIV['commands']['main']['args_description'],
+                                        TRIV['commands']['main']['completion'],
+                                        TRIV['commands']['main']['callback'],
+                                        TRIV['commands']['main']['callback_data'])
     return weechat.WEECHAT_RC_OK
 ### END MAIN COMMAND
 
@@ -357,13 +406,14 @@ def reload_options_cb(data, option, value):
         instance = option.split('.')[-2]
         TRIV['instances']['launched'][instance].Load_Vars()
     else:
+        # CRITICAL CHANGE
         Stop_All_Instances()
         Free_All_Options()
         Relaunch_Instances()
     return weechat.WEECHAT_RC_OK
 
 def config_hook():
-    weechat.hook_config('plugins.var.python.' + TRIV['params']['script_name'] + '.*', 'reload_options_cb', '')
+    weechat.hook_config('plugins.var.python.' + TRIV['register']['script_name'] + '.*', 'reload_options_cb', '')
 ### END OPTIONS
 
 ### CRITICAL CONF CHANGED
@@ -387,6 +437,7 @@ def LaunchInstances():
         Set_Instance_Options(instance)
         TRIV['instances']['launched'][instance] = Trivial(instance)
         TRIV['instances']['launched'][instance].Start_Listener()
+    AddCommand()
     TRIV['config_hook'] = config_hook()
 ### END INSTANCES
 
@@ -437,53 +488,8 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
 
 ### MAIN PROCEDURE
 def main():
-    global TRIV
-    TRIV = {}
-    TRIV['params'] = {}
-    TRIV['commands'] = {}
-    TRIV['rc'] = {}
-    TRIV['instances'] = { 'ids' : 'schranz,dnbjungle' }
-    TRIV['instances']['launched'] = {}
-    TRIV['default_instance_options'] = {
-        'time_interval' : '20',
-        'wait_time'     : '5',
-        'header_time'   : '5',
-        'trivial_path'  : '/home/manuel/.weechat_trivial/python',
-        'trivial_db'    : 'trivialbot.db',
-        'reward'        : '25000',
-        'pot'           : '1',
-        'admin_nicks'   : 'z0idberg',
-        'cmd_prefix'    : '#',
-        'room'          : '',
-        'server'        : ''
-        }
-
-    # Register script
-    register_params = {
-        'script_name'       : 'trivial',
-        'author'            : 'nashgul <m.alcocer1978@gmail.com>',
-        'version'           : '0.1',
-        'license'           : 'beer-ware',
-        'description'       : 'trivial bot',
-        'shutdown_function' : 'free_options_cb',
-        'charset'           : ''
-        }
-    Register(register_params)
-
+    Register()
     set_default_options()
-
-    # create command
-    main_command = {
-        'command'           : 'trivial',
-        'description'       : 'trivial bot for weechat',
-        'args'              : '[start] | [stop]',
-        'args_description'  : '',
-        'completion'        : '',
-        'callback'          : 'my_trivial_cb',
-        'callback_data'     : ''
-        }
-    AddCommand(main_command)
-
     LaunchInstances()
 
 if __name__ == '__main__':
