@@ -88,11 +88,16 @@ class Trivial:
 
     def Check_Session_db(self):
         date_str = str(datetime.now().date())
-        values = (date_str, self.opts['server'])
-        self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
+        values = (date_str, self.opts['server'], self.opts['room'])
+        select = '''select count(id), id
+                    from sessions
+                    where date=?
+                    and server=?
+                    and room=?'''
+        self.SelectOne(select, values)
         if self.result[0] < 1:
-            self.InsertOne('insert into sessions (date, server) values (?,?)', values)
-            self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
+            self.InsertOne('insert into sessions (date, server, room) values (?,?,?)', values)
+            self.SelectOne(select, values)
         if self.result[0] > 0:
             return int(self.result[1])
         else:
