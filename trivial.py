@@ -334,7 +334,7 @@ class Trivial:
         weechat.command(self.buffer_ptr, 'Puntos de hoy por %s: %s' % (winner, points))
 
     def Show_Tips(self):
-        state = self.trivial['state']
+        state = str(self.trivial['state'])
         if self.trivial['state'] == 1:
             answer = ''
             for word in self.answer:
