@@ -51,6 +51,7 @@ TRIV['commands']['main'] = {
     'callback_data'     : ''
     }
 
+
 class Trivial:
 #==================#
 # OPTIONS SETTINGS #
@@ -267,6 +268,16 @@ class Trivial:
 # BANNERS #
 #=========#
 
+    def GiveColor(self, string, color):
+        colors = {
+        'white' : '00', 'black' : '01', 'darkblue' : '02', 'darkgreen' : '03',
+        'lightred' : '04', 'darkred' : '05', 'magenta' : '06', 'orange' : '07',
+        'yellow' : '08', 'lightgreen' : '09', 'cyan' : '10', 'lightcyan' : '11',
+        'lightblue' : '12', 'lightmagenta' : '13', 'gray' : '14', 'lightgray' : '15'
+        }
+        string_str = u'\x03' + colors[color] + string + u'\x0f'
+        return string_str
+
     def Show_Question(self):
         theme = u'\x03' + '12 ' + self.theme + u'\x0f'
         question = u'\x02 ' + self.question + u'\x0f'
@@ -318,7 +329,9 @@ class Trivial:
         pass
 
     def Show_Awards(self, winner):
-        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner, self.trivial['reward']))
+        reward = self.trivial['reward']
+        winner_str = self.GiveColor(winner, 'yellow')
+        weechat.command(self.buffer_ptr, 'Puntos conseguidos por %s: %s' % (winner_str, self.trivial['reward']))
 
     def Show_Session_Awards(self, winner):
         id_session = self.Check_Session_db()
@@ -377,7 +390,7 @@ class Trivial:
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         separator = u'\x03' + '05' + ' <== ' + u'\x0f'
         space = '    '
-        weechat.command(self.buffer_ptr, tip_msg + space + separator + points_str + ' ' + reward_str)
+        weechat.command(self.buffer_ptr, tip_msg + space + separator + points_str + reward_str)
 
     def Show_Rewards(self):
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
