@@ -31,8 +31,6 @@ class TrivialRoom:
         self.opts = {}
         for option in options.keys():
             self.opts[option] = self.MyOpt(option)
-        #self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
-
 
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
@@ -93,7 +91,6 @@ class TrivialRoom:
 
     def Check_Session_db(self):
         date_str = str(datetime.now().date())
-        #values = (date_str, self.opts['server'])
         values = (date_str, self.server)
         self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
         if self.result[0] < 1:
@@ -105,7 +102,6 @@ class TrivialRoom:
             return False
 
     def Check_Nick_db(self, nick):
-        #values = (nick, self.opts['server'])
         values = (nick, self.server)
         self.SelectOne('select count(id), id from users where nick=? and server=?', values)
         if self.result[0] < 1:
@@ -131,8 +127,6 @@ class TrivialRoom:
             id_user = self.Check_Nick_db(winner)
             insert = 'insert into session_questions (datetime, id_session, id_question, id_user, points_won) values (?,?,?,?,?)'
             values = (datetime_str, id_session, id_question, id_user, points_won)
-            for x in values:
-                weechat.prnt('', str(x))
         self.InsertOne(insert, values)
 
                     #==============#
@@ -145,7 +139,6 @@ class TrivialRoom:
         if not maxcalls:
             maxcalls = 4
         try:
-            ##                                                                              WWWW
             self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', str(self.TrivId))
         except:
             weechat.prnt('', 'Error loading main main_timer on Main_Timer')
@@ -373,7 +366,6 @@ def AddCommand(params):
 def my_trivial_cb(data, buffer, args):
     global MyTrivs
     params = args.split(' ')
-    weechat.prnt('', str(params))
     if len(params) == 2:
         if params[0] == 'start':
             MyTrivs[int(params[1])].Start_Game()
@@ -423,7 +415,6 @@ def Reload_Trivial_Vars():
         MyTrivs[trivnum].Load_Vars()
 ### End plugin functions
 
-
 ### Main procedure
 def main():
     # Register script
@@ -441,8 +432,6 @@ def main():
     # Setting default options for script
     global options
     options = {
-        'server'        : 'freenode',
-        #'room'          : '#birras',
         'rooms'         : 'hispano.#schranz,hispano.#dnb_&_jungle',
         'time_interval' : '20',
         'wait_time'     : '5',
@@ -470,10 +459,6 @@ def main():
         'callback_data'     : ''
         }
     AddCommand(main_command)
-
-    #global MyTriv
-    #MyTriv = TrivialRoom()
-    #MyTriv.Start_Listener()
 
     global MyTrivs
     MyTrivs = []
