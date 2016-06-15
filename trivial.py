@@ -326,39 +326,52 @@ def AddCommand(params):
 
 ### SCRIPT OPTIONS
 def set_default_options():
-    weechat.config_set_plugin('ids', TRIV['instances']['ids'])
+    if not weechat.config_is_set_plugin('ids'):
+        weechat.config_set_plugin('ids', TRIV['instances']['ids'])
 
 def Set_Instance_Options(instance):
     for option, value in TRIV['default_instance_options'].items():
         if not weechat.config_is_set_plugin(instance + '.' + option):
             weechat.config_set_plugin('instance.' + instance + '.' + option, value)
 
-def free_options_cb():
+def free_options_cb(all_conf=True):
     weechat.unhook_all()
-    instances = weechat.config_get_plugin('ids')
-    instances = instances.split(',')
-    instances = [ instance.strip(' ') for instance in instances ]
-
-    for instance in instances:
+    for instance in TRIV['instances']['launched'].keys():
         for option in TRIV['default_instance_options'].keys():
             TRIV['rc']['instance.' + instance + '.' + option] = weechat.config_unset_plugin('instance.' + instance + '.' + option)
-
-    TRIV['rc']['instances'] = weechat.config_unset_plugin('ids')
-
+    if all_conf:
+        TRIV['rc']['instances'] = weechat.config_unset_plugin('ids')
     for option,value in TRIV['rc'].items():
         if value == weechat.WEECHAT_CONFIG_OPTION_UNSET_ERROR:
             return weechat.WEECHAT_RC_ERROR
-
     return weechat.WEECHAT_RC_OK
 
 def reload_options_cb(data, option, value):
-    instance = option.split('.')[-2]
-    TRIV['instances']['launched'][instance].Load_Vars()
+    option_chgd = option.split('.')[-1]
+    if option_chgd != 'ids':
+        instance = option.split('.')[-2]
+        TRIV['instances']['launched'][instance].Load_Vars()
+    else:
+        Stop_All_Instances()
+        Free_All_Options()
+        Relaunch_Instances()
     return weechat.WEECHAT_RC_OK
 
 def config_hook():
     weechat.hook_config('plugins.var.python.' + TRIV['params']['script_name'] + '.*', 'reload_options_cb', '')
 ### END OPTIONS
+
+### CRITICAL CONF CHANGED
+def Stop_All_Instances():
+    for instance in TRIV['instances']['launched'].keys():
+        TRIV['instances']['launched'][instance].Stop_Game()
+
+def Free_All_Options():
+    free_options_cb(False)
+
+def Relaunch_Instances():
+    LaunchInstances()
+### END CRITICAL CONF CHANGED
 
 ### LAUNCH INSTANCES
 def LaunchInstances():
@@ -369,6 +382,7 @@ def LaunchInstances():
         Set_Instance_Options(instance)
         TRIV['instances']['launched'][instance] = Trivial(instance)
         TRIV['instances']['launched'][instance].Start_Listener()
+    TRIV['config_hook'] = config_hook()
 ### END INSTANCES
 
 ### TRIVIAL CALLBACK FUNCTIONS
@@ -466,8 +480,6 @@ def main():
     AddCommand(main_command)
 
     LaunchInstances()
-
-    config_hook()
 
 if __name__ == '__main__':
     main()
