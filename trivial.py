@@ -9,39 +9,36 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
-class TrivialRoom:
+class Trivial:
                     #==================#
                     # OPTIONS SETTINGS #
                     #==================#
 
-    def __init__(self, trivnum, room):
+    def __init__(self, instance):
+        self.TrivId = instance
         self.running = False
         self.trivial = {}
+        self.opts = {}
         self.Load_Vars()
-        self.TrivId = trivnum
-        self.ConfigureRoom(room)
-
-    def ConfigureRoom(self, room):
-        self.server = room.split('.')[0]
-        self.room = room.split('.')[1]
-        self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.server, self.room))
 
     def Load_Vars(self):
-        global options
-        self.opts = {}
-        for option in options.keys():
-            self.opts[option] = self.MyOpt(option)
+        for option in TRIV['default_instance_options'].keys():
+            self.opts[option] = self.MyOpt('instance.' + self.TrivId + '.' + option)
+        self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
 
     def MyOpt(self, option):
         value = weechat.config_get_plugin(option)
         return value
+
+    def Depurar(self, value):
+        weechat.prnt('',str(value))
 
                     #==================#
                     # LISTENER METHODS #
                     #==================#
 
     def Start_Listener(self):
-        self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', str(self.TrivId))
+        self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
 
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
@@ -91,7 +88,7 @@ class TrivialRoom:
 
     def Check_Session_db(self):
         date_str = str(datetime.now().date())
-        values = (date_str, self.server)
+        values = (date_str, self.opts['server'])
         self.SelectOne('select count(id), id from sessions where date=? and server=?', values)
         if self.result[0] < 1:
             self.InsertOne('insert into sessions (date, server) values (?,?)', values)
@@ -102,7 +99,7 @@ class TrivialRoom:
             return False
 
     def Check_Nick_db(self, nick):
-        values = (nick, self.server)
+        values = (nick, self.opts['server'])
         self.SelectOne('select count(id), id from users where nick=? and server=?', values)
         if self.result[0] < 1:
             try:
@@ -139,7 +136,7 @@ class TrivialRoom:
         if not maxcalls:
             maxcalls = 4
         try:
-            self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', str(self.TrivId))
+            self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', self.TrivId)
         except:
             weechat.prnt('', 'Error loading main main_timer on Main_Timer')
 
@@ -207,7 +204,7 @@ class TrivialRoom:
         self.Show_Session_Awards(winner)
         self.Show_Ranking()
         interval = int(self.opts['wait_time'])
-        weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', str(self.TrivId))
+        weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', self.TrivId)
 
     def Show_Answer(self):
         answer_str = u'\x03' + '12' + 'La respuesta era: ' + u'\x0f'
@@ -307,117 +304,141 @@ class TrivialRoom:
         points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
         weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
 
+### REGISTER SCRIPT
 def Register(params):
-    global OPTS
-    OPTS = {}
-    OPTS['params'] = {}
-    OPTS['commands'] = {}
     for key, value in params.items():
-        OPTS['params'][key] = value
-    weechat.register(OPTS['params']['script_name'], OPTS['params']['author'],
-                     OPTS['params']['version'], OPTS['params']['license'],
-                     OPTS['params']['description'], OPTS['params']['shutdown_function'],
-                     OPTS['params']['charset'])
+        TRIV['params'][key] = value
+    weechat.register(TRIV['params']['script_name'], TRIV['params']['author'],
+                     TRIV['params']['version'], TRIV['params']['license'],
+                     TRIV['params']['description'], TRIV['params']['shutdown_function'],
+                     TRIV['params']['charset'])
+### END REGISTER SCRIPT
 
-def set_default_options(options):
-    global OPTS
-    OPTS['default_options'] = options
-    OPTS['plugin_options'] = {}
-    for option, default_value in OPTS['default_options'].items():
-        if not weechat.config_is_set_plugin(option):
-            weechat.config_set_plugin(option, default_value)
-
-def load_options():
-    global OPTS
-    for option in OPTS['default_options'].keys():
-        OPTS['plugin_options'][option] = weechat.config_get_plugin(option)
-
-def free_options_cb():
-    global OPTS
-    OPTS['rc'] = {}
-    for option in OPTS['default_options'].keys():
-        OPTS['rc'][option] = weechat.config_unset_plugin(option)
-
-    for option,value in OPTS['rc'].items():
-        if value == weechat.WEECHAT_CONFIG_OPTION_UNSET_ERROR:
-            return weechat.WEECHAT_RC_ERROR
-    return weechat.WEECHAT_RC_OK
-
-def reload_options_cb(data, option, value):
-    global OPTS
-    OPTS['plugin_options'][option] = value
-    Reload_Trivial_Vars()
-    return weechat.WEECHAT_RC_OK
-
-def config_hook():
-    global OPTS
-    weechat.hook_config('plugins.var.python.' + OPTS['params']['script_name'] + '.*', 'reload_options_cb', '')
-
+### REGISTER MAIN COMMAND
 def AddCommand(params):
-    global OPTS
     hook = weechat.hook_command(params['command'], params['description'],
                                 params['args'], params['args_description'],
                                 params['completion'], params['callback'],
                                 params['callback_data'])
-    OPTS['commands'][params['command']] = hook
+    TRIV['commands'][params['command']] = hook
+    return weechat.WEECHAT_RC_OK
+### END MAIN COMMAND
+
+### SCRIPT OPTIONS
+def set_default_options():
+    weechat.config_set_plugin('ids', TRIV['instances']['ids'])
+
+def Set_Instance_Options(instance):
+    for option, value in TRIV['default_instance_options'].items():
+        if not weechat.config_is_set_plugin(instance + '.' + option):
+            weechat.config_set_plugin('instance.' + instance + '.' + option, value)
+
+def free_options_cb():
+    weechat.unhook_all()
+    instances = weechat.config_get_plugin('ids')
+    instances = instances.split(',')
+    instances = [ instance.strip(' ') for instance in instances ]
+
+    for instance in instances:
+        for option in TRIV['default_instance_options'].keys():
+            TRIV['rc']['instance.' + instance + '.' + option] = weechat.config_unset_plugin('instance.' + instance + '.' + option)
+
+    TRIV['rc']['instances'] = weechat.config_unset_plugin('ids')
+
+    for option,value in TRIV['rc'].items():
+        if value == weechat.WEECHAT_CONFIG_OPTION_UNSET_ERROR:
+            return weechat.WEECHAT_RC_ERROR
+
     return weechat.WEECHAT_RC_OK
 
-### Trivial functions
+def reload_options_cb(data, option, value):
+    instance = option.split('.')[-2]
+    TRIV['instances']['launched'][instance].Load_Vars()
+    return weechat.WEECHAT_RC_OK
+
+def config_hook():
+    weechat.hook_config('plugins.var.python.' + TRIV['params']['script_name'] + '.*', 'reload_options_cb', '')
+### END OPTIONS
+
+### LAUNCH INSTANCES
+def LaunchInstances():
+    instances = weechat.config_get_plugin('ids')
+    instances = instances.split(',')
+    instances = [ instance.strip(' ') for instance in instances ]
+    for instance in instances:
+        Set_Instance_Options(instance)
+        TRIV['instances']['launched'][instance] = Trivial(instance)
+        TRIV['instances']['launched'][instance].Start_Listener()
+### END INSTANCES
+
+### TRIVIAL CALLBACK FUNCTIONS
 def my_trivial_cb(data, buffer, args):
-    global MyTrivs
     params = args.split(' ')
     if len(params) == 2:
         if params[0] == 'start':
-            MyTrivs[int(params[1])].Start_Game()
+            TRIV['instances']['launched'][params[1]].Start_Game()
         elif params[0] == 'stop':
-            MyTrivs[int(params[1])].Stop_Game()
+            TRIV['instances']['launched'][params[1]].Stop_Game()
         else:
             # do nothing
             weechat.prnt('', str(params))
     return weechat.WEECHAT_RC_OK
 
 def Run_Game_cb(data, remaining_calls):
-    global MyTrivs
-    MyTrivs[int(data)].running = True
-    if MyTrivs[int(data)].trivial['state'] == 0:
+    TRIV['instances']['launched'][data].running = True
+    if TRIV['instances']['launched'][data].trivial['state'] == 0:
         if int(remaining_calls) == 0:
-            MyTrivs[int(data)].Main_Timer(False,3)
-        MyTrivs[int(data)].First_State()
-    elif MyTrivs[int(data)].trivial['state']== 1:
-        MyTrivs[int(data)].Second_State()
-    elif MyTrivs[int(data)].trivial['state'] == 2:
-        MyTrivs[int(data)].Third_State()
+            TRIV['instances']['launched'][data].Main_Timer(False,3)
+        TRIV['instances']['launched'][data].First_State()
+    elif TRIV['instances']['launched'][data].trivial['state']== 1:
+        TRIV['instances']['launched'][data].Second_State()
+    elif TRIV['instances']['launched'][data].trivial['state'] == 2:
+        TRIV['instances']['launched'][data].Third_State()
     else:
-        MyTrivs[int(data)].No_Winner()
+        TRIV['instances']['launched'][data].No_Winner()
     return weechat.WEECHAT_RC_OK
 
 def Wait_Next_Round_cb(data, remaining_calls):
-    global MyTrivs
-    MyTrivs[int(data)].Main_Timer()
+    TRIV['instances']['launched'][data].Main_Timer()
     return weechat.WEECHAT_RC_OK
 
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
-    global MyTrivs
-    nick = MyTrivs[int(data)].Check_Nick(prefix)
-    cmd_prefix = MyTrivs[int(data)].opts['cmd_prefix']
-    if MyTrivs[int(data)].running == True and MyTrivs[int(data)].trivial['state'] != 0:
-        if message.lower() == MyTrivs[int(data)].answer.lower():
-            MyTrivs[int(data)].Winner(nick)
-        elif message.lower() == cmd_prefix + 'trivial stop'.lower() and MyTrivs[int(data)].Is_Admin(nick):
-            MyTrivs[int(data)].Stop_Game()
+    nick = TRIV['instances']['launched'][data].Check_Nick(prefix)
+    cmd_prefix = TRIV['instances']['launched'][data].opts['cmd_prefix']
+    if TRIV['instances']['launched'][data].running == True and TRIV['instances']['launched'][data].trivial['state'] != 0:
+        if message.lower() == TRIV['instances']['launched'][data].answer.lower():
+            TRIV['instances']['launched'][data].Winner(nick)
+        elif message.lower() == cmd_prefix + 'trivial stop'.lower() and TRIV['instances']['launched'][data].Is_Admin(nick):
+            TRIV['instances']['launched'][data].Stop_Game()
     else:
-        if message.lower() == cmd_prefix + 'trivial start'.lower() and MyTrivs[int(data)].Is_Admin(nick):
-            MyTrivs[int(data)].Start_Game()
+        if message.lower() == cmd_prefix + 'trivial start'.lower() and TRIV['instances']['launched'][data].Is_Admin(nick):
+            TRIV['instances']['launched'][data].Start_Game()
     return weechat.WEECHAT_RC_OK
+### END CALLBACK FUNCTIONS
 
-def Reload_Trivial_Vars():
-    global MyTrivs
-    for trivnum in xrange(len(MyTrivs)):
-        MyTrivs[trivnum].Load_Vars()
-### End plugin functions
-
-### Main procedure
+### MAIN PROCEDURE
 def main():
+    global TRIV
+    TRIV = {}
+    TRIV['params'] = {}
+    TRIV['commands'] = {}
+    TRIV['rc'] = {}
+    TRIV['instances'] = { 'ids' : 'schranz,dnbjungle' }
+    TRIV['instances']['launched'] = {}
+    TRIV['default_instance_options'] = {
+        'time_interval' : '20',
+        'wait_time'     : '5',
+        'header_time'   : '5',
+        'trivial_path'  : '/home/manuel/.weechat_trivial/python',
+        'trivial_db'    : 'trivialbot.db',
+        'reward'        : '25000',
+        'pot'           : '1',
+        'admin_nicks'   : 'z0idberg',
+        'cmd_prefix'    : '#',
+        'room'          : '',
+        'server'        : ''
+        }
+
     # Register script
     register_params = {
         'script_name'       : 'trivial',
@@ -430,25 +451,7 @@ def main():
         }
     Register(register_params)
 
-    # Setting default options for script
-    global options
-    options = {
-        'rooms'         : 'hispano.#schranz,hispano.#dnb_&_jungle',
-        'time_interval' : '20',
-        'wait_time'     : '5',
-        'header_time'   : '5',
-        'trivial_path'  : '/home/manuel/.weechat_trivial/python',
-        'trivial_db'    : 'trivialbot.db',
-        'reward'        : '25000',
-        'pot'           : '1',
-        'admin_nicks'   : 'z0idberg',
-        'cmd_prefix'    : '#'
-        }
-    set_default_options(options)
-
-    # load actual plugin options
-    load_options()
-    config_hook()
+    set_default_options()
 
     # create command
     main_command = {
@@ -462,15 +465,9 @@ def main():
         }
     AddCommand(main_command)
 
-    global MyTrivs
-    MyTrivs = []
-    rooms = options['rooms'].split(',')
-    rooms = [ room.strip(' ') for room in rooms ]
+    LaunchInstances()
 
-    for room_num in xrange(len(rooms)):
-        Trivi = TrivialRoom(room_num, rooms[room_num])
-        MyTrivs.append(Trivi)
-        MyTrivs[room_num].Start_Listener()
+    config_hook()
 
 if __name__ == '__main__':
     main()
