@@ -399,13 +399,14 @@ def Wait_Next_Round_cb(data, remaining_calls):
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
     global MyTrivs
     nick = MyTrivs[int(data)].Check_Nick(prefix)
+    cmd_prefix = MyTrivs[int(data)].opts['cmd_prefix']
     if MyTrivs[int(data)].running == True and MyTrivs[int(data)].trivial['state'] != 0:
         if message.lower() == MyTrivs[int(data)].answer.lower():
             MyTrivs[int(data)].Winner(nick)
-        elif message.lower() == '!trivial stop'.lower() and MyTrivs[int(data)].Is_Admin(nick):
+        elif message.lower() == cmd_prefix + 'trivial stop'.lower() and MyTrivs[int(data)].Is_Admin(nick):
             MyTrivs[int(data)].Stop_Game()
     else:
-        if message.lower() == '!trivial start'.lower() and MyTrivs[int(data)].Is_Admin(nick):
+        if message.lower() == cmd_prefix + 'trivial start'.lower() and MyTrivs[int(data)].Is_Admin(nick):
             MyTrivs[int(data)].Start_Game()
     return weechat.WEECHAT_RC_OK
 
@@ -441,6 +442,7 @@ def main():
         'reward'        : '25000',
         'pot'           : '1',
         'admin_nicks'   : 'z0idberg',
+        'cmd_prefix'    : '#'
         }
     set_default_options(options)
 
