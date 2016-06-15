@@ -290,7 +290,7 @@ class Trivial:
                     session_questions sq,
                     sessions s
                     where sq.id_user = u.id
-                    and  sq.id_session = s.id
+                    and sq.id_session = s.id
                     and s.server = (select server from sessions where id = ? )
                     group by sq.id_user
                     order by points desc
