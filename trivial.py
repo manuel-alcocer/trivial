@@ -59,7 +59,7 @@ COLORS = {
 }
 for color in COLORS.keys():
     COLORS[color] = u'\x03' + COLORS[color]
-
+COLORS['BOLD'] = u'\x02'
 
 class Trivial:
 #==================#
@@ -227,18 +227,14 @@ class Trivial:
         self.Fetch_Question()
         self.Show_Question()
         self.Show_Tips()
-        #self.Show_Rewards()
 
     def Second_State(self):
         self.trivial['state'] = 2
         self.Show_Tips()
-        #self.Show_Rewards()
 
     def Third_State(self):
         self.trivial['state'] = 3
-        self.Show_Question()
         self.Show_Tips()
-        #self.Show_Rewards()
 
     def No_Winner(self):
         self.trivial['state'] = 0
@@ -278,26 +274,17 @@ class Trivial:
 # BANNERS #
 #=========#
 
-    def GiveColor(self, string, color):
-        colors = {
-        'white' : '00', 'black' : '01', 'darkblue' : '02', 'darkgreen' : '03',
-        'lightred' : '04', 'darkred' : '05', 'magenta' : '06', 'orange' : '07',
-        'yellow' : '08', 'lightgreen' : '09', 'cyan' : '10', 'lightcyan' : '11',
-        'lightblue' : '12', 'lightmagenta' : '13', 'gray' : '14', 'lightgray' : '15'
-        }
-        string_str = u'\x03' + colors[color] + string + u'\x0f'
-        return string_str
-
     def Show_Question(self):
         question = u'\x02 ' + self.question
         answer = self.answer
-        string = '%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: %s' %(COLORS['LIGHTGREEN'],
+        string = '%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: %s%s' %(COLORS['LIGHTGREEN'],
                                                                               COLORS['LIGHTRED'], str(self.qid),
                                                                               COLORS['LIGHTGREEN'],
                                                                               COLORS['YELLOW'],
-                                                                              COLORS['LIGHTBLUE'], self.theme,
+                                                                              COLORS['LIGHTMAGENTA'], self.theme,
                                                                               COLORS['YELLOW'],
-                                                                              COLORS['LIGHTBLUE'], question) + u'\x0f'
+                                                                              COLORS['LIGHTBLUE'],
+                                                                              COLORS['BOLD'], question) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
@@ -332,7 +319,7 @@ class Trivial:
         self.Show_Ranking_Header()
         string = ''
         for nick_stat in self.ranking:
-            number_str = '%s[%s%s%s]:' %(COLORS['LIGHTGREEN'],
+            number_str = '%s[%s%s%s]: ' %(COLORS['LIGHTGREEN'],
                                          COLORS['YELLOW'], str(count),
                                          COLORS['LIGHTGREEN']) + u'\x0f'
             nick_str = '%s%s' %(COLORS['LIGHTBLUE'], nick_stat[0]) + '\x0f'
@@ -344,7 +331,8 @@ class Trivial:
         weechat.command(self.buffer_ptr, string)
 
     def Show_Ranking_Header(self):
-        pass
+        string = '%sRANKING TOTAL:' %COLORS['YELLOW'] + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
 
     def Show_Awards(self, winner):
         string = '%s¡¡¡Enhorabuena!!! %s %s¡¡¡Acertó!!!' %(COLORS['LIGHTRED'],
@@ -371,7 +359,7 @@ class Trivial:
                                                                         COLORS['LIGHTRED'],
                                                                         COLORS['LIGHTBLUE'], str(points),
                                                                         COLORS['LIGHTRED'],
-                                                                        COLORS['YELLOW']) + u'\x0f' + u'\x0f'
+                                                                        COLORS['YELLOW']) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
     def Show_Tips(self):
