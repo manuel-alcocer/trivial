@@ -396,6 +396,7 @@ class Trivial:
                                                                      COLORS['YELLOW'],
                                                                      COLORS['LIGHTBLUE'], str(self.successful_answers),
                                                                      COLORS['YELLOW']) + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
         if self.opts['bonus_enabled']:
             if self.opts['bonus_limit'] > 0:
                 select = select + ' LIMIT ?'
