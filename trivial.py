@@ -305,10 +305,8 @@ class Trivial:
             bonus = bonus_mult * int(self.opts['bonus_reward'])
             string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTRED']) + u'\x0f'
             weechat.command(self.buffer_ptr, string)
-            string = '%sBonus conseguido: %s<< %s%s %s>>' %(COLORS['LIGHTBLUE'],
-                                                            COLORS['YELLOW'],
-                                                            COLORS['LIGHTBLUE'], str(bonus),
-                                                            COLORS['YELLOW']) + u'\x0f'
+            string = '%sBonus conseguido: %s%s' %(COLORS['LIGHTBLUE'],
+                                                  COLORS['YELLOW'], str(bonus)) + u'\x0f'
             weechat.command(self.buffer_ptr, string)
             self.trivial['reward'] = bonus + self.trivial['reward']
 
