@@ -92,9 +92,22 @@ class Trivial:
 
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
+        self.announcer = weechat.hook_timer(5 * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
+
+#===========#
+# ANNOUNCER #
+#===========#
+
+    def Announcer(self):
+        if not self.running:
+            string = ('%s(%s%s%s) %sPara lanzar el trivial:' %(COLORS['YELLOW'],
+                                                               COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
+                                                               COLORS['YELLOW']) + u'\x0f' +
+                        '%s%sTRIVIAL START' %(COLORS['BOLD'],self.opts['cmd_prefix']) + u'\x0f')
+            weechat.command(self.buffer_ptr, string)
 
 #==============#
 # NICK METHODS #
@@ -225,6 +238,11 @@ class Trivial:
 #==============
 
     def First_State(self):
+        string = ('%sPARA PARAR EL JUEGO ESCRIBE: ' %COLORS['LIGHTRED'] + u'\x0f' +
+                    '%s%sTRIVIAL STOP' %(COLORS['BOLD'], self.opts['cmd_prefix']) + u'\x0f')
+        weechat.command(self.buffer_ptr, string)
+        string = ('%sComienza la ronda..' %COLORS['LIGHTCYAN'])
+        weechat.command(self.buffer_ptr, string)
         self.trivial['state'] = 1
         self.Fetch_Question()
         self.Show_Question()
@@ -519,7 +537,6 @@ def close_callback_cb():
 ### TRIVIAL CALLBACK FUNCTIONS
 def my_trivial_cb(data, buffer, args):
     params = args.split(' ')
-    weechat.prnt('', 'paramaaas: %s' %str(params))
     if len(params) == 2:
         if params[0].lower() == 'start':
             TRIV['instances']['launched'][params[1]].Start_Game()
@@ -557,15 +574,13 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
         if message.lower() == TRIV['instances']['launched'][data].answer.lower():
             TRIV['instances']['launched'][data].Winner(nick)
     if message.lower() == cmd_prefix + 'trivial stop' and TRIV['instances']['launched'][data].Is_Admin(nick) and buffer == TRIV['instances']['launched'][data].buffer_ptr:
-        #TRIV['instances']['launched'][data].Stop_Game()
-        weechat.prnt('', '/trivial stop %s' %data)
-        weechat.prnt('', 'opp: %s' %str(TRIV['instances']['launched']))
         weechat.command(buffer, '/trivial stop %s' %data)
     elif message.lower() == cmd_prefix + 'trivial start' and TRIV['instances']['launched'][data].Is_Admin(nick) and buffer == TRIV['instances']['launched'][data].buffer_ptr:
-        #TRIV['instances']['launched'][data].Start_Game()
-        weechat.prnt('', '/trivial start %s' %data)
-        weechat.prnt('', 'opp: %s' %str(TRIV['instances']['launched']))
         weechat.command(buffer, '/trivial start %s' %data)
+    return weechat.WEECHAT_RC_OK
+
+def announcer_cb(data, remaining_calls):
+    TRIV['instances']['launched'][data].Announcer()
     return weechat.WEECHAT_RC_OK
 ### END CALLBACK FUNCTIONS
 
