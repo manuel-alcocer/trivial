@@ -105,7 +105,8 @@ class Trivial:
         if not self.running and self.buffer_ptr:
             string = ('%s(%s%s%s) %sPara lanzar el trivial:' %(COLORS['YELLOW'],
                                                                COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
-                                                               COLORS['YELLOW']) + u'\x0f' +
+                                                               COLORS['YELLOW'],
+                                                               COLORS['LIGHTGREEN']) + u'\x0f' +
                         '%s%sTRIVIAL START' %(COLORS['BOLD'],self.opts['cmd_prefix']) + u'\x0f')
             weechat.command(self.buffer_ptr, string)
 
