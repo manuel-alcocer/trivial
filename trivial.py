@@ -206,6 +206,7 @@ class Trivial:
 
     def Start_Game(self):
         weechat.prnt('', 'Trivial started')
+        self.running = True
         self.trivial['state'] = 0
         # set first question in 10 seconds
         self.Show_First_Header()
@@ -557,6 +558,7 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
             TRIV['instances']['launched'][data].Winner(nick)
         elif message.lower() == cmd_prefix + 'trivial stop' and TRIV['instances']['launched'][data].Is_Admin(nick):
             #TRIV['instances']['launched'][data].Stop_Game()
+            weechat.prnt('', '/trivial stop %s' %data)
             weechat.command(buffer, '/trivial stop %s' %data)
     else:
         if message.lower() == cmd_prefix + 'trivial start' and TRIV['instances']['launched'][data].Is_Admin(nick):
