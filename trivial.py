@@ -239,6 +239,7 @@ class Trivial:
     def First_State(self):
         string = ('%s(%s%s%s) %sPARA PARAR EL JUEGO ESCRIBE: ' %(COLORS['YELLOW'],
                                                                  COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
+                                                                 COLORS['YELLOW'],
                                                                  COLORS['LIGHTRED']) + u'\x0f' +
                     '%s%sTRIVIAL STOP' %(COLORS['BOLD'], self.opts['cmd_prefix']) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
