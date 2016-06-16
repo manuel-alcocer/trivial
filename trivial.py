@@ -248,11 +248,11 @@ class Trivial:
         self.Main_Timer()
 
     def Winner(self, winner):
-        self.Show_Answer()
         self.trivial['state'] = 0
         if self.trivial['main_timer']:
             weechat.unhook(self.trivial['main_timer'])
         self.Show_Awards(winner)
+        self.Show_Answer()
         self.Register_Question(winner)
         self.Show_Session_Awards(winner)
         self.Show_Ranking()
@@ -289,21 +289,24 @@ class Trivial:
         return string_str
 
     def Show_Question(self):
-        theme = u'\x03' + '12 ' + self.theme + u'\x0f'
-        question = u'\x02 ' + self.question + u'\x0f'
+        question = u'\x02 ' + self.question
         answer = self.answer
-        q_id = u'\x03' + '05' + '[' + u'\x03' + '07' + ' preg.%s ' % str(self.qid) + u'\x03' + '05' + ']' + u'\x0f'
-        weechat.command(self.buffer_ptr, '%s %s : %s' %(q_id, theme, question))
+        string = '%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: %s' %(COLORS['LIGHTGREEN'],
+                                                                              COLORS['LIGHTRED'], str(self.qid),
+                                                                              COLORS['LIGHTGREEN'],
+                                                                              COLORS['YELLOW'],
+                                                                              COLORS['LIGHTBLUE'], self.theme,
+                                                                              COLORS['YELLOW'],
+                                                                              COLORS['LIGHTBLUE'], question) + u'x\0f'
+        weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
     def Show_First_Header(self):
         weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
 
     def Show_Answer(self):
-        answer_str = self.GiveColor('La respuesta era: ', 'darkblue')
-        answer = u'\x02' + self.answer + u'\x0f'
-        #weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
-        string = '%sLa respuesta era: %s%s' %(COLORS['LIGHTBLUE'], COLORS['YELLOW'], self.answer)  + u'\x0f'
+        string = '%sLa respuesta era: %s%s' %(COLORS['LIGHTBLUE'],
+                                              COLORS['YELLOW'], self.answer)  + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
     def Show_Ranking(self):
@@ -325,29 +328,31 @@ class Trivial:
         self.cur.execute(select, (id_session,))
         self.ranking = self.cur.fetchall()
         self.conn.close()
-        weechat.prnt('', str(len(self.ranking)))
         count = 1
         self.Show_Ranking_Header()
-        total_str = ''
+        string = ''
         for nick_stat in self.ranking:
-            number_str = u'\x03' + '8 ' + str(count) + ': ' + u'\x0f'
-            nick_str = u'\x03' + '6' + nick_stat[0] + u'\x0f'
-            points_str = u'\x03' '9' + ' (' + u'\x0f' + u'\x03' + '6 ' + str(nick_stat[1]) + u'\x0f' + u'\x03' '9' + ' )' + u'\x0f'
-            total_str = total_str + number_str + nick_str + points_str
+            number_str = '%s[%s%s%s]:' %(COLORS['LIGHTGREEN'],
+                                         COLORS['YELLOW'], str(count),
+                                         COLORS['LIGHTGREEN']) + u'\x0f'
+            nick_str = '%s%s' %(COLORS['LIGHTBLUE'], nick_stat[0]) + '\x0f'
+            points_str = ' %s(%s%s%s)  ' %(COLORS['LIGHTRED'],
+                                           COLORS['LIGHTBLUE'] str(nick_stat[1]),
+                                           COLORS['LIGHTRED']) + u'\x0f'
+            string = string + number_str + nick_str + points_str
             count = count + 1
-        weechat.command(self.buffer_ptr, total_str)
+        weechat.command(self.buffer_ptr, string)
 
     def Show_Ranking_Header(self):
         pass
 
     def Show_Awards(self, winner):
-        reward = self.GiveColor(str(self.trivial['reward']), 'lightblue')
-        winner_str = self.GiveColor(winner, 'darkgreen')
-        congratulations = self.GiveColor('¡¡¡Enhorabuena!!!', 'orange')
-        action = self.GiveColor('¡¡¡Acertó!!!', 'orange')
-        weechat.command(self.buffer_ptr, '%s %s %s' %(congratulations, winner_str, action))
-        points_str = self.GiveColor('Puntos conseguidos:', 'magenta')
-        weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward))
+        string = '%s¡¡¡Enhorabuena!!! %s %s¡¡¡Acertó!!!' %(COLORS['LIGHTRED'],
+                                                           COLORS['LIGHTGREEN'], COLORS['LIGHTRED']) + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
+        string = '%sPuntos conseguidos: %s%s' %(COLORS['YELLOW'],
+                                                COLORS['LIGHTBLUE'], str(self.trivial['reward'])) + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
 
     def Show_Session_Awards(self, winner):
         id_session = self.Check_Session_db()
@@ -361,11 +366,13 @@ class Trivial:
         self.SelectOne(select, values)
         points = self.result[0]
         self.conn.close()
-        winner_str = self.GiveColor(winner, 'yellow')
-        header = self.GiveColor('Puntos de hoy: ', 'cyan')
-        points_str = self.GiveColor(str(points), 'magenta')
-        arrows = self.GiveColor(' <<-- ', 'darkred')
-        weechat.command(self.buffer_ptr, '%s %s %s %s' % (winner_str, arrows, header, points_str))
+        string = '%s-->>%s%s %sha conseguido hoy: %s%s %spuntos %s<<--' %(COLORS['YELLOW'],
+                                                                        COLORS['LIGHTBLUE'], winner,
+                                                                        COLORS['LIGHTRED'],
+                                                                        COLORS['LIGHTBLUE'], str(points),
+                                                                        COLORS['LIGHTRED'],
+                                                                        COLORS['YELLOW']) + u'\x0f' + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
 
     def Show_Tips(self):
         state = str(self.trivial['state'])
@@ -404,19 +411,12 @@ class Trivial:
                             answer = answer + '*'
                     else:
                         answer = answer + ' '
-        tip_msg = u'\x03' + '12' + ' ' + state + 'ª Pista: ' + u'\x0f' + u'\x03' + '10' + '%s' % answer + '\x0f'
         self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
-        reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
-        points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
-        separator = u'\x03' + '05' + ' <== ' + u'\x0f'
-        space = '    '
+        string = '%s%sª pista: %s%s %s<<-- %s%s' %(COLORS['LIGHTBLUE'], state,
+                                                   COLORS['LIGHTGREEN'], answer,
+                                                   COLORS['LIGHTRED'],
+                                                   COLORS['YELLOW'], self.trivial['reward']) + u'\x0f'
         weechat.command(self.buffer_ptr, tip_msg + space + separator + points_str + reward_str)
-
-    def Show_Rewards(self):
-        self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
-        reward_str = u'\x03' + '06' + str(self.trivial['reward']) + u'\x0f'
-        points_str = u'\x03' + '08' + 'Puntos: ' + u'\x0f'
-        weechat.command(self.buffer_ptr, '%s %s' % (points_str, reward_str))
 
 #=======================#
 # (TODO) POT MANAGEMENT #
