@@ -556,14 +556,14 @@ def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, mes
     if TRIV['instances']['launched'][data].running == True and TRIV['instances']['launched'][data].trivial['state'] != 0:
         if message.lower() == TRIV['instances']['launched'][data].answer.lower():
             TRIV['instances']['launched'][data].Winner(nick)
-        elif message.lower() == cmd_prefix + 'trivial stop' and TRIV['instances']['launched'][data].Is_Admin(nick):
-            #TRIV['instances']['launched'][data].Stop_Game()
-            weechat.prnt('', '/trivial stop %s' %data)
-            weechat.command(buffer, '/trivial stop %s' %data)
-    else:
-        if message.lower() == cmd_prefix + 'trivial start' and TRIV['instances']['launched'][data].Is_Admin(nick):
-            #TRIV['instances']['launched'][data].Start_Game()
-            weechat.command(buffer, '/trivial start %s' %data)
+    if message.lower() == cmd_prefix + 'trivial stop' and TRIV['instances']['launched'][data].Is_Admin(nick):
+        #TRIV['instances']['launched'][data].Stop_Game()
+        weechat.prnt('', '/trivial stop %s' %data)
+        weechat.command(buffer, '/trivial stop %s' %data)
+    elif message.lower() == cmd_prefix + 'trivial start' and TRIV['instances']['launched'][data].Is_Admin(nick):
+        #TRIV['instances']['launched'][data].Start_Game()
+        weechat.prnt('', '/trivial start %s' %data)
+        weechat.command(buffer, '/trivial start %s' %data)
     return weechat.WEECHAT_RC_OK
 ### END CALLBACK FUNCTIONS
 
