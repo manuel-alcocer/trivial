@@ -391,7 +391,8 @@ class Trivial:
                                     and s.id_user is not null
                                     )'''
         self.SelectOne(select,values)
-        self.successful_answers = self.result[0]
+        # improve this solution
+        self.successful_answers = self.result[0] + 1
         string = '%sRespuestas acertadas seguidas: %s%s' %(COLORS['LIGHTBLUE'],
                                                            COLORS['YELLOW'], str(self.successful_answers)) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
@@ -400,7 +401,8 @@ class Trivial:
                 select = select + ' LIMIT ?'
                 values = (id_user, id_user, self.opts['bonus_limit'])
                 self.SelectOne(select,values)
-            self.successful_answers_for_bonus = self.result[0]
+            # improve this solution
+            self.successful_answers_for_bonus = self.result[0] + 1
             self.Calc_Show_Bonus(winner)
         string = '%sPuntos conseguidos: %s%s' %(COLORS['LIGHTBLUE'],
                                                 COLORS['YELLOW'], str(self.trivial['reward'])) + u'\x0f'
