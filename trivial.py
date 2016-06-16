@@ -467,7 +467,7 @@ class Trivial:
         string = '%s%sª pista: %s%s %s<<-- %s%s' %(COLORS['LIGHTBLUE'], state,
                                                    COLORS['LIGHTGREEN'], answer,
                                                    COLORS['LIGHTRED'],
-                                                   COLORS['YELLOW'], self.trivial['reward']) + u'\x0f'
+                                                   COLORS['YELLOW'], str(self.trivial['reward'])) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
 #=======================#
