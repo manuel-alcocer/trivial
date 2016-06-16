@@ -74,12 +74,15 @@ class Trivial:
         self.trivial = {}
         self.opts = {}
         self.Load_Vars()
+        self.announcer = False
 
     def Load_Vars(self):
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = weechat.config_get_plugin('instance.' + self.TrivId + '.' + option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
         interval = int(self.opts['announcer_time'])
+        if self.announcer:
+            weechat.unhook(self.announcer)
         self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
 #==================#
