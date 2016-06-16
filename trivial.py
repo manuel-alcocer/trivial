@@ -23,6 +23,7 @@ TRIV['default_instance_options'] = {
     'trivial_path'  : '/home/manuel/.weechat/python',
     'trivial_db'    : 'trivialbot.db',
     'reward'        : '25000',
+    'extra_reward'  : '25',
     'pot'           : '1',
     'admin_nicks'   : 'z0idberg',
     'cmd_prefix'    : '#',
@@ -465,11 +466,11 @@ class Trivial:
                             answer = answer + '*'
                     else:
                         answer = answer + ' '
-        self.trivial['reward'] = int(self.opts['reward']) / self.trivial['state']
-        string = '%s%sª pista: %s%s %s<<-- %s%s' %(COLORS['LIGHTBLUE'], state,
-                                                   COLORS['LIGHTGREEN'], answer,
-                                                   COLORS['LIGHTRED'],
-                                                   COLORS['YELLOW'], str(self.trivial['reward'])) + u'\x0f'
+        self.trivial['reward'] = (int(self.opts['reward']) + int(self.opts['extra_reward']) * len(self.answer)) / self.trivial['state']
+        string = '%s%sª pista: %s%s %s<<-- %s%s puntos' %(COLORS['LIGHTBLUE'], state,
+                                                          COLORS['LIGHTGREEN'], answer,
+                                                          COLORS['LIGHTRED'],
+                                                          COLORS['YELLOW'], str(self.trivial['reward'])) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
 #=======================#
