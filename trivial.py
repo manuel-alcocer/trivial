@@ -314,7 +314,7 @@ class Trivial:
                 select = select + ' LIMIT ?'
                 values = (id_user, id_user, self.opts['bonus_limit'])
             self.SelectOne(select,values)
-            bonus_mult = int(self.result[0]) / self.opts['bonus_mod']
+            bonus_mult = int(self.result[0]) / int(self.opts['bonus_mod'])
             if bonus_mult > 0:
                 bonus = bonus_mult * self.opts['bonus_reward']
                 string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTCYAN']) + u'\x0f'
