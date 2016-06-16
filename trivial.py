@@ -98,7 +98,7 @@ class Trivial:
 
     def Announcer(self):
         if not self.running and self.buffer_ptr:
-            string = ('%s(%s%s%s) %sPara lanzar el trivial:' %(COLORS['YELLOW'],
+            string = ('%s(%s%s%s) %sPara lanzar el trivial: ' %(COLORS['YELLOW'],
                                                                COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
                                                                COLORS['YELLOW'],
                                                                COLORS['LIGHTGREEN']) + u'\x0f' +
