@@ -9,7 +9,7 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
-global TRIV
+global TRIV, colors
 TRIV = {}
 TRIV['commands'] = {}
 TRIV['rc'] = {}
@@ -50,6 +50,15 @@ TRIV['commands']['main'] = {
     'callback'          : 'my_trivial_cb',
     'callback_data'     : ''
     }
+
+COLORS = {
+'WHITE' : '00', 'BLACK' : '01', 'DARKBLUE' : '02', 'DARKGREEN' : '03',
+'LIGHTRED' : '04', 'DARKRED' : '05', 'MAGENTA' : '06', 'ORANGE' : '07',
+'YELLOW' : '08', 'LIGHTGREEN' : '09', 'CYAN' : '10', 'LIGHTCYAN' : '11',
+'LIGHTBLUE' : '12', 'LIGHTMAGENTA' : '13', 'GRAY' : '14', 'LIGHTGRAY' : '15'
+}
+for color in COLORS.keys():
+    COLORS[color] = u'\x03' + COLORS[color]
 
 
 class Trivial:
@@ -293,7 +302,9 @@ class Trivial:
     def Show_Answer(self):
         answer_str = self.GiveColor('La respuesta era: ', 'darkblue')
         answer = u'\x02' + self.answer + u'\x0f'
-        weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
+        #weechat.command(self.buffer_ptr, '%s %s' %(answer_str, answer))
+        string = '%sLa respuesta era: %s%s' %(COLORS['LIGHTBLUE'], COLORS['YELLOW'], self.answer)  + u'\x0f'
+        weechat.command(self.buffer_ptr, string)
 
     def Show_Ranking(self):
         self.ranking = []
