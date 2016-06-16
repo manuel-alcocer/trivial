@@ -273,7 +273,6 @@ class Trivial:
         if self.trivial['main_timer']:
             weechat.unhook(self.trivial['main_timer'])
         self.Show_Awards(winner)
-        self.Show_Answer()
         self.Register_Question(winner)
         self.Show_Session_Awards(winner)
         self.Show_Ranking()
@@ -399,6 +398,7 @@ class Trivial:
                                                              COLORS['LIGHTGREEN'], winner,
                                                              COLORS['LIGHTRED']) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
+        self.Show_Answer()
         string = '%sPuntos conseguidos: %s%s' %(COLORS['YELLOW'],
                                                 COLORS['LIGHTBLUE'], str(self.trivial['reward'])) + u'\x0f'
 
