@@ -89,7 +89,6 @@ class Trivial:
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
 
-
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
 
