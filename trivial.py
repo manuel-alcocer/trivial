@@ -314,21 +314,22 @@ class Trivial:
                 select = select + ' LIMIT ?'
                 values = (id_user, id_user, self.opts['bonus_limit'])
             self.SelectOne(select,values)
-            bonus_mult = int(self.result[0]) / int(self.opts['bonus_mod'])
+            bonus_mult = int(self.result[0]) % int(self.opts['bonus_mod'])
             if bonus_mult > 0:
                 bonus = bonus_mult * int(self.opts['bonus_reward'])
-                string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTCYAN']) + u'\x0f'
+                string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTRED']) + u'\x0f'
                 weechat.command(self.buffer_ptr, string)
                 string = '%sBonus conseguido: %s<< %s%s %s>>' %(COLORS['LIGHTBLUE'],
                                                                 COLORS['YELLOW'],
                                                                 COLORS['LIGHTBLUE'], str(bonus),
                                                                 COLORS['YELLOW']) + u'\x0f'
+                weechat.command(self.buffer_ptr, string)
                 total = bonus + self.trivial['reward']
                 string = '%sTotal Acumulado en esta pregunta: %s¡¡¡ %s%s %s!!!' %(COLORS['LIGHTBLUE'],
                                                                                   COLORS['YELLOW'],
                                                                                   COLORS['LIGHTBLUE'], str(total),
                                                                                   COLORS['YELLOW']) + u'\x0f'
-
+                weechat.command(self.buffer_ptr, string)
 
 #=========#
 # BANNERS #
