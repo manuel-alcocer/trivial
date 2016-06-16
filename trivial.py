@@ -297,7 +297,7 @@ class Trivial:
                                                                               COLORS['YELLOW'],
                                                                               COLORS['LIGHTBLUE'], self.theme,
                                                                               COLORS['YELLOW'],
-                                                                              COLORS['LIGHTBLUE'], question) + u'x\0f'
+                                                                              COLORS['LIGHTBLUE'], question) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
