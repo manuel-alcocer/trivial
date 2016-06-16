@@ -337,7 +337,7 @@ class Trivial:
                                          COLORS['LIGHTGREEN']) + u'\x0f'
             nick_str = '%s%s' %(COLORS['LIGHTBLUE'], nick_stat[0]) + '\x0f'
             points_str = ' %s(%s%s%s)  ' %(COLORS['LIGHTRED'],
-                                           COLORS['LIGHTBLUE'] str(nick_stat[1]),
+                                           COLORS['LIGHTBLUE'], str(nick_stat[1]),
                                            COLORS['LIGHTRED']) + u'\x0f'
             string = string + number_str + nick_str + points_str
             count = count + 1
