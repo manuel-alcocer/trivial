@@ -74,15 +74,12 @@ class Trivial:
         self.trivial = {}
         self.opts = {}
         self.Load_Vars()
-        self.announcer = False
 
     def Load_Vars(self):
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = weechat.config_get_plugin('instance.' + self.TrivId + '.' + option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
         interval = int(self.opts['announcer_time'])
-        if self.announcer:
-            weechat.unhook(self.announcer)
         self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
 #==================#
@@ -108,6 +105,9 @@ class Trivial:
                                                                COLORS['LIGHTGREEN']) + u'\x0f' +
                         '%s%sTRIVIAL START' %(COLORS['BOLD'],self.opts['cmd_prefix']) + u'\x0f')
             weechat.command(self.buffer_ptr, string)
+
+    def Kill_Announcer(self):
+        weechat.unhook(self.announcer)
 
 #==============#
 # NICK METHODS #
@@ -482,6 +482,7 @@ def free_options_cb(all_conf=True):
 def reload_options_cb(data, option, value):
     option_chgd = option.split('.')[-1]
     if option_chgd != 'ids':
+        TRIV['instances']['launched'][instance].Kill_Announcer()
         instance = option.split('.')[-2]
         TRIV['instances']['launched'][instance].Load_Vars()
     else:
