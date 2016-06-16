@@ -79,6 +79,7 @@ class Trivial:
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = weechat.config_get_plugin('instance.' + self.TrivId + '.' + option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
+        interval = int(self.opts['announcer_time'])
         self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
 #==================#
@@ -87,7 +88,7 @@ class Trivial:
 
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
-        interval = int(self.opts['announcer_time'])
+
 
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
