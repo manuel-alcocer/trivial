@@ -62,6 +62,7 @@ for color in COLORS.keys():
 COLORS['BOLD'] = u'\x02'
 
 class Trivial:
+
 #==================#
 # OPTIONS SETTINGS #
 #==================#
@@ -330,7 +331,7 @@ class Trivial:
         weechat.command(self.buffer_ptr, string)
 
     def Show_Ranking_Header(self):
-        string = '%sRANKING TOTAL:' %COLORS['YELLOW'] + u'\x0f'
+        string = '%sTOP 10:' %COLORS['YELLOW'] + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
     def Show_Awards(self, winner):
@@ -550,6 +551,7 @@ def Wait_Next_Round_cb(data, remaining_calls):
 def Check_message_cb(data, buffer, date, tags, displayed, highlight, prefix, message):
     nick = TRIV['instances']['launched'][data].Check_Nick(prefix)
     cmd_prefix = TRIV['instances']['launched'][data].opts['cmd_prefix']
+    weechat.prnt('', nick + ' - ' + cmd_prefix + ' - ' + str(data))
     if TRIV['instances']['launched'][data].running == True and TRIV['instances']['launched'][data].trivial['state'] != 0:
         if message.lower() == TRIV['instances']['launched'][data].answer.lower():
             TRIV['instances']['launched'][data].Winner(nick)
