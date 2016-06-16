@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+
 import weechat
 import sqlite3
 
@@ -9,7 +10,7 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
-global TRIV, colors
+
 TRIV = {}
 TRIV['commands'] = {}
 TRIV['rc'] = {}
@@ -17,9 +18,9 @@ TRIV['instances'] = { 'ids' : 'schranz,dnbjungle' }
 TRIV['instances']['launched'] = {}
 TRIV['default_instance_options'] = {
     'time_interval' : '20',
-    'wait_time'     : '5',
-    'header_time'   : '5',
-    'announcer_time': '600',
+    'time_wait'     : '10',
+    'time_header'   : '5',
+    'time_announcer': '600',
     'trivial_path'  : '/home/manuel/.weechat/python',
     'trivial_db'    : 'trivialbot.db',
     'reward'        : '25000',
@@ -40,7 +41,7 @@ TRIV['register'] = {
     'script_name'       : 'trivial',
     'author'            : 'nashgul <m.alcocer1978@gmail.com>',
     'version'           : '0.1',
-    'license'           : 'GPL3 + beer-ware',
+    'license'           : 'GPL3',
     'description'       : 'trivial game for weechat',
     'shutdown_function' : 'free_options_cb',
     'charset'           : ''
@@ -58,10 +59,10 @@ TRIV['commands']['main'] = {
     }
 
 COLORS = {
-'WHITE'     : '00', 'BLACK'         : '01', 'DARKBLUE'  : '02', 'DARKGREEN' : '03',
-'LIGHTRED'  : '04', 'DARKRED'       : '05', 'MAGENTA'   : '06', 'ORANGE'    : '07',
-'YELLOW'    : '08', 'LIGHTGREEN'    : '09', 'CYAN'      : '10', 'LIGHTCYAN' : '11',
-'LIGHTBLUE' : '12', 'LIGHTMAGENTA'  : '13', 'GRAY'      : '14', 'LIGHTGRAY' : '15'
+          'WHITE'     : '00', 'BLACK'         : '01', 'DARKBLUE'  : '02', 'DARKGREEN' : '03',
+          'LIGHTRED'  : '04', 'DARKRED'       : '05', 'MAGENTA'   : '06', 'ORANGE'    : '07',
+          'YELLOW'    : '08', 'LIGHTGREEN'    : '09', 'CYAN'      : '10', 'LIGHTCYAN' : '11',
+          'LIGHTBLUE' : '12', 'LIGHTMAGENTA'  : '13', 'GRAY'      : '14', 'LIGHTGRAY' : '15'
 }
 for color in COLORS.keys():
     COLORS[color] = u'\x03' + COLORS[color]
@@ -84,7 +85,7 @@ class Trivial:
         for option in TRIV['default_instance_options'].keys():
             self.opts[option] = weechat.config_get_plugin('instance.' + self.TrivId + '.' + option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
-        interval = int(self.opts['announcer_time'])
+        interval = int(self.opts['time_announcer'])
         self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
 #==================#
@@ -219,14 +220,14 @@ class Trivial:
         try:
             self.trivial['main_timer'] = weechat.hook_timer(interval * 1000, 0, maxcalls, 'Run_Game_cb', self.TrivId)
         except:
-            weechat.prnt('', 'Error loading main main_timer on Main_Timer')
+            weechat.prnt('', 'Error loading main_timer on Main_Timer')
 
     def Start_Game(self):
         weechat.prnt('', 'Trivial started')
         self.trivial['state'] = 0
         # set first question in 10 seconds
         self.Show_First_Header()
-        interval = int(self.opts['header_time'])
+        interval = int(self.opts['time_header'])
         self.Main_Timer(interval,1)
 
     def Stop_Game(self):
@@ -247,7 +248,7 @@ class Trivial:
                                                                  COLORS['LIGHTRED']) + u'\x0f' +
                     '%s%sTRIVIAL STOP' %(COLORS['BOLD'], self.opts['cmd_prefix']) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
-        string = ('%sComienza la ronda..' %COLORS['LIGHTCYAN'])
+        string = ('%sComienza la ronda...' %COLORS['LIGHTCYAN'])
         weechat.command(self.buffer_ptr, string)
         self.trivial['state'] = 1
         self.Fetch_Question()
@@ -277,7 +278,7 @@ class Trivial:
         self.Register_Question(winner)
         self.Show_Session_Awards(winner)
         self.Show_Ranking()
-        interval = int(self.opts['wait_time'])
+        interval = int(self.opts['time_wait'])
         weechat.hook_timer(interval * 1000, 0, 1, 'Wait_Next_Round_cb', self.TrivId)
 
 #==================#
@@ -304,7 +305,7 @@ class Trivial:
         if bonus_check == 0:
             bonus_mult = int(self.successful_answers_for_bonus) / int(self.opts['bonus_mod'])
             bonus = bonus_mult * int(self.opts['bonus_reward'])
-            string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTRED']) + u'\x0f'
+            string = '%s¡¡¡HEY!!! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTRED']) + u'\x0f'
             weechat.command(self.buffer_ptr, string)
             string = '%sBonus conseguido: %s%s' %(COLORS['LIGHTBLUE'],
                                                   COLORS['YELLOW'], str(bonus)) + u'\x0f'
@@ -329,7 +330,7 @@ class Trivial:
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
     def Show_First_Header(self):
-        weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['header_time'])
+        weechat.command(self.buffer_ptr, 'El trivial comienza en %s segundos.' % self.opts['time_header'])
 
     def Show_Answer(self):
         string = '%sLa respuesta era: %s%s' %(COLORS['LIGHTBLUE'],
