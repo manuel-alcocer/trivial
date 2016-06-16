@@ -482,8 +482,8 @@ def free_options_cb(all_conf=True):
 def reload_options_cb(data, option, value):
     option_chgd = option.split('.')[-1]
     if option_chgd != 'ids':
-        TRIV['instances']['launched'][instance].Kill_Announcer()
         instance = option.split('.')[-2]
+        TRIV['instances']['launched'][instance].Kill_Announcer()
         TRIV['instances']['launched'][instance].Load_Vars()
     else:
         # CRITICAL CHANGE
