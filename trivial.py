@@ -416,7 +416,7 @@ class Trivial:
                                                    COLORS['LIGHTGREEN'], answer,
                                                    COLORS['LIGHTRED'],
                                                    COLORS['YELLOW'], self.trivial['reward']) + u'\x0f'
-        weechat.command(self.buffer_ptr, tip_msg + space + separator + points_str + reward_str)
+        weechat.command(self.buffer_ptr, string)
 
 #=======================#
 # (TODO) POT MANAGEMENT #
