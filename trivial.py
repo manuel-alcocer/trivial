@@ -316,7 +316,7 @@ class Trivial:
             self.SelectOne(select,values)
             bonus_mult = int(self.result[0]) / int(self.opts['bonus_mod'])
             if bonus_mult > 0:
-                bonus = bonus_mult * self.opts['bonus_reward']
+                bonus = bonus_mult * int(self.opts['bonus_reward'])
                 string = '%s¡¡¡HEY! ¡¡¡Tienes BONUS!!!' %(COLORS['LIGHTCYAN']) + u'\x0f'
                 weechat.command(self.buffer_ptr, string)
                 string = '%sBonus conseguido: %s<< %s%s %s>>' %(COLORS['LIGHTBLUE'],
