@@ -35,7 +35,7 @@ TRIV['register'] = {
     'script_name'       : 'trivial',
     'author'            : 'nashgul <m.alcocer1978@gmail.com>',
     'version'           : '0.1',
-    'license'           : 'beer-ware',
+    'license'           : 'GPL3 + beer-ware',
     'description'       : 'trivial game for weechat',
     'shutdown_function' : 'free_options_cb',
     'charset'           : ''
@@ -53,10 +53,10 @@ TRIV['commands']['main'] = {
     }
 
 COLORS = {
-'WHITE' : '00', 'BLACK' : '01', 'DARKBLUE' : '02', 'DARKGREEN' : '03',
-'LIGHTRED' : '04', 'DARKRED' : '05', 'MAGENTA' : '06', 'ORANGE' : '07',
-'YELLOW' : '08', 'LIGHTGREEN' : '09', 'CYAN' : '10', 'LIGHTCYAN' : '11',
-'LIGHTBLUE' : '12', 'LIGHTMAGENTA' : '13', 'GRAY' : '14', 'LIGHTGRAY' : '15'
+'WHITE'     : '00', 'BLACK'         : '01', 'DARKBLUE'  : '02', 'DARKGREEN' : '03',
+'LIGHTRED'  : '04', 'DARKRED'       : '05', 'MAGENTA'   : '06', 'ORANGE'    : '07',
+'YELLOW'    : '08', 'LIGHTGREEN'    : '09', 'CYAN'      : '10', 'LIGHTCYAN' : '11',
+'LIGHTBLUE' : '12', 'LIGHTMAGENTA'  : '13', 'GRAY'      : '14', 'LIGHTGRAY' : '15'
 }
 for color in COLORS.keys():
     COLORS[color] = u'\x03' + COLORS[color]
@@ -99,9 +99,9 @@ class Trivial:
     def Announcer(self):
         if not self.running and self.buffer_ptr:
             string = ('%s(%s%s%s) %sPara lanzar el trivial: ' %(COLORS['YELLOW'],
-                                                               COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
-                                                               COLORS['YELLOW'],
-                                                               COLORS['LIGHTGREEN']) + u'\x0f' +
+                                                                COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
+                                                                COLORS['YELLOW'],
+                                                                COLORS['LIGHTGREEN']) + u'\x0f' +
                         '%s%sTRIVIAL START' %(COLORS['BOLD'],self.opts['cmd_prefix']) + u'\x0f')
             weechat.command(self.buffer_ptr, string)
 
@@ -298,12 +298,12 @@ class Trivial:
     def Show_Question(self):
         answer = self.answer
         string = ('%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: ' %(COLORS['LIGHTGREEN'],
-                                                                              COLORS['LIGHTRED'], str(self.qid),
-                                                                              COLORS['LIGHTGREEN'],
-                                                                              COLORS['YELLOW'],
-                                                                              COLORS['LIGHTMAGENTA'], self.theme,
-                                                                              COLORS['YELLOW'],
-                                                                              COLORS['LIGHTBLUE']) + u'\x0f' +
+                                                                             COLORS['LIGHTRED'], str(self.qid),
+                                                                             COLORS['LIGHTGREEN'],
+                                                                             COLORS['YELLOW'],
+                                                                             COLORS['LIGHTMAGENTA'], self.theme,
+                                                                             COLORS['YELLOW'],
+                                                                             COLORS['LIGHTBLUE']) + u'\x0f' +
                     '%s%s' %(COLORS['BOLD'], self.question) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
@@ -340,8 +340,8 @@ class Trivial:
         string = ''
         for nick_stat in self.ranking:
             number_str = '%s[%s%s%s]: ' %(COLORS['LIGHTGREEN'],
-                                         COLORS['YELLOW'], str(count),
-                                         COLORS['LIGHTGREEN']) + u'\x0f'
+                                          COLORS['YELLOW'], str(count),
+                                          COLORS['LIGHTGREEN']) + u'\x0f'
             nick_str = '%s%s' %(COLORS['LIGHTBLUE'], nick_stat[0]) + '\x0f'
             points_str = ' %s(%s%s%s)  ' %(COLORS['LIGHTRED'],
                                            COLORS['LIGHTBLUE'], str(nick_stat[1]),
@@ -356,8 +356,8 @@ class Trivial:
 
     def Show_Awards(self, winner):
         string = '%s¡¡¡Enhorabuena!!! %s%s %s¡¡¡Acertó!!!' %(COLORS['LIGHTRED'],
-                                                           COLORS['LIGHTGREEN'], winner,
-                                                           COLORS['LIGHTRED']) + u'\x0f'
+                                                             COLORS['LIGHTGREEN'], winner,
+                                                             COLORS['LIGHTRED']) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
         string = '%sPuntos conseguidos: %s%s' %(COLORS['YELLOW'],
                                                 COLORS['LIGHTBLUE'], str(self.trivial['reward'])) + u'\x0f'
@@ -376,11 +376,11 @@ class Trivial:
         points = self.result[0]
         self.conn.close()
         string = '%s-->>%s%s %sha conseguido hoy: %s%s %spuntos %s<<--' %(COLORS['YELLOW'],
-                                                                        COLORS['LIGHTBLUE'], winner,
-                                                                        COLORS['LIGHTRED'],
-                                                                        COLORS['LIGHTBLUE'], str(points),
-                                                                        COLORS['LIGHTRED'],
-                                                                        COLORS['YELLOW']) + u'\x0f'
+                                                                          COLORS['LIGHTBLUE'], winner,
+                                                                          COLORS['LIGHTRED'],
+                                                                          COLORS['LIGHTBLUE'], str(points),
+                                                                          COLORS['LIGHTRED'],
+                                                                          COLORS['YELLOW']) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
 
     def Show_Tips(self):
@@ -448,12 +448,12 @@ def Register():
 ### REGISTER MAIN COMMAND
 def AddCommand():
     TRIV['commands']['main']['hook'] = weechat.hook_command(TRIV['commands']['main']['command'],
-                                        TRIV['commands']['main']['description'],
-                                        TRIV['commands']['main']['args'],
-                                        TRIV['commands']['main']['args_description'],
-                                        TRIV['commands']['main']['completion'],
-                                        TRIV['commands']['main']['callback'],
-                                        TRIV['commands']['main']['callback_data'])
+                                                            TRIV['commands']['main']['description'],
+                                                            TRIV['commands']['main']['args'],
+                                                            TRIV['commands']['main']['args_description'],
+                                                            TRIV['commands']['main']['completion'],
+                                                            TRIV['commands']['main']['callback'],
+                                                            TRIV['commands']['main']['callback_data'])
     return weechat.WEECHAT_RC_OK
 ### END MAIN COMMAND
 
@@ -521,11 +521,10 @@ def LaunchInstances():
     TRIV['config_hook'] = config_hook()
 ### END INSTANCES
 
-### MAIN CONFIG MENU
+### TODO: MAIN CONFIG MENU
 def Main_Config_Menu():
     TRIV['conf_buffer'] = weechat.buffer_new('trivial', 'buffer_conf_cb', '',
-                            'close_callback_cb', '')
-    weechat.prnt('', str(TRIV['conf_buffer']))
+                                             'close_callback_cb', '')
 
 def buffer_conf_cb():
     pass
