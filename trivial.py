@@ -519,6 +519,7 @@ def close_callback_cb():
 ### TRIVIAL CALLBACK FUNCTIONS
 def my_trivial_cb(data, buffer, args):
     params = args.split(' ')
+    weechat.prnt('', 'paramaaas: %s' %str(params))
     if len(params) == 2:
         if params[0].lower() == 'start':
             TRIV['instances']['launched'][params[1]].Start_Game()
