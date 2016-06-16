@@ -302,7 +302,7 @@ class Trivial:
     def Calc_Show_Bonus(self, winner):
         if self.opts['bonus_enable'] > 0:
             id_user = self.Check_Nick_db(winner)
-            values = (id_user,)
+            values = (id_user,id_user)
             select = '''select count(*) from session_questions
                         where id_user = ?
                         and datetime > (
@@ -312,7 +312,7 @@ class Trivial:
                                         )'''
             if self.opts['bonus_limit'] > 0:
                 select = select + ' LIMIT ?'
-                values = (id_user, self.opts['bonus_limit'])
+                values = (id_user, id_user, self.opts['bonus_limit'])
             self.SelectOne(select,values)
             bonus_mult = int(self.result[0]) / self.opts['bonus_mod']
             if bonus_mult > 0:
