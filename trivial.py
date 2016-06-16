@@ -77,15 +77,9 @@ class Trivial:
 
     def Load_Vars(self):
         for option in TRIV['default_instance_options'].keys():
-            self.opts[option] = self.MyOpt('instance.' + self.TrivId + '.' + option)
+            self.opts[option] = weechat.config_get_plugin('instance.' + self.TrivId + '.' + option)
         self.buffer_ptr = weechat.buffer_search('irc','%s.%s' %(self.opts['server'], self.opts['room']))
-
-    def MyOpt(self, option):
-        value = weechat.config_get_plugin(option)
-        return value
-
-    def Depurar(self, value):
-        weechat.prnt('',str(value))
+        self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
 #==================#
 # LISTENER METHODS #
@@ -94,7 +88,6 @@ class Trivial:
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
         interval = int(self.opts['announcer_time'])
-        self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
@@ -222,7 +215,6 @@ class Trivial:
 
     def Start_Game(self):
         weechat.prnt('', 'Trivial started')
-        self.running = True
         self.trivial['state'] = 0
         # set first question in 10 seconds
         self.Show_First_Header()
@@ -241,7 +233,9 @@ class Trivial:
 #==============
 
     def First_State(self):
-        string = ('%sPARA PARAR EL JUEGO ESCRIBE: ' %COLORS['LIGHTRED'] + u'\x0f' +
+        string = ('%s(%s%s%s) %sPARA PARAR EL JUEGO ESCRIBE: ' %(COLORS['YELLOW'],
+                                                                 COLORS['LIGHTBLUE'], str(self.opts['admin_nicks']),
+                                                                 COLORS['LIGHTRED']) + u'\x0f' +
                     '%s%sTRIVIAL STOP' %(COLORS['BOLD'], self.opts['cmd_prefix']) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
         string = ('%sComienza la ronda..' %COLORS['LIGHTCYAN'])
