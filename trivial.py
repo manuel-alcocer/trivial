@@ -19,6 +19,7 @@ TRIV['default_instance_options'] = {
     'time_interval' : '20',
     'wait_time'     : '5',
     'header_time'   : '5',
+    'announcer_time': '600',
     'trivial_path'  : '/home/manuel/.weechat/python',
     'trivial_db'    : 'trivialbot.db',
     'reward'        : '25000',
@@ -92,7 +93,8 @@ class Trivial:
 
     def Start_Listener(self):
         self.listener_hook = weechat.hook_print(self.buffer_ptr, 'irc_privmsg', '', 1, 'Check_message_cb', self.TrivId)
-        self.announcer = weechat.hook_timer(5 * 1000, 0, 0, 'announcer_cb', self.TrivId)
+        interval = int(self.opts['announcer_time'])
+        self.announcer = weechat.hook_timer(interval * 1000, 0, 0, 'announcer_cb', self.TrivId)
 
     def Stop_Listener(self):
         weechat.unhook(self.listener_hook)
