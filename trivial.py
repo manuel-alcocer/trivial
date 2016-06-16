@@ -275,16 +275,15 @@ class Trivial:
 #=========#
 
     def Show_Question(self):
-        question = u'\x02 ' + self.question
         answer = self.answer
-        string = '%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: %s%s' %(COLORS['LIGHTGREEN'],
+        string = ('%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: ' %(COLORS['LIGHTGREEN'],
                                                                               COLORS['LIGHTRED'], str(self.qid),
                                                                               COLORS['LIGHTGREEN'],
                                                                               COLORS['YELLOW'],
                                                                               COLORS['LIGHTMAGENTA'], self.theme,
                                                                               COLORS['YELLOW'],
-                                                                              COLORS['LIGHTBLUE'],
-                                                                              COLORS['BOLD'], question) + u'\x0f'
+                                                                              COLORS['LIGHTBLUE']) + u'\x0f' +
+                    '%s%s' %(COLORS['BOLD'], self.question) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
@@ -335,8 +334,9 @@ class Trivial:
         weechat.command(self.buffer_ptr, string)
 
     def Show_Awards(self, winner):
-        string = '%s¡¡¡Enhorabuena!!! %s %s¡¡¡Acertó!!!' %(COLORS['LIGHTRED'],
-                                                           COLORS['LIGHTGREEN'], COLORS['LIGHTRED']) + u'\x0f'
+        string = '%s¡¡¡Enhorabuena!!! %s%s %s¡¡¡Acertó!!!' %(COLORS['LIGHTRED'],
+                                                           COLORS['LIGHTGREEN'], winner,
+                                                           COLORS['LIGHTRED']) + u'\x0f'
         weechat.command(self.buffer_ptr, string)
         string = '%sPuntos conseguidos: %s%s' %(COLORS['YELLOW'],
                                                 COLORS['LIGHTBLUE'], str(self.trivial['reward'])) + u'\x0f'
