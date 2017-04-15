@@ -10,6 +10,16 @@ sys.setdefaultencoding('utf8')
 
 from datetime import datetime
 
+COLORS = {
+          'WHITE'     : '00', 'BLACK'         : '01', 'DARKBLUE'  : '02', 'DARKGREEN' : '03',
+          'LIGHTRED'  : '04', 'DARKRED'       : '05', 'MAGENTA'   : '06', 'ORANGE'    : '07',
+          'YELLOW'    : '08', 'LIGHTGREEN'    : '09', 'CYAN'      : '10', 'LIGHTCYAN' : '11',
+          'LIGHTBLUE' : '12', 'LIGHTMAGENTA'  : '13', 'GRAY'      : '14', 'LIGHTGRAY' : '15'
+}
+
+for color in COLORS.keys():
+    COLORS[color] = u'\x03' + COLORS[color]
+COLORS['BOLD'] = u'\x02'
 
 TRIV = {}
 TRIV['commands'] = {}
@@ -33,17 +43,28 @@ TRIV['default_instance_options'] = {
     'bonus_enabled' : '1',
     'bonus_limit'   : '30',
     'bonus_reward'  : '10000',
-    'bonus_mod'   : '2'
+    'bonus_mod'     : '5',
+    'color_cluenum' : COLORS['LIGHTBLUE'],
+    'color_cluetxt' : COLORS['DARKGREEN'],
+    'color_topicdec': COLORS['LIGHTRED'],
+    'color_topic'   : COLORS['LIGHTMAGENTA'],
+    'color_qnumdec' : COLORS['DARKGREEN'],
+    'color_qnum'    : COLORS['LIGHTRED'],
+    'color_asklbl'  : COLORS['LIGHTBLUE'],
+    'color_asktxt'  : COLORS['BOLD'],
+    'color_anslbl'  : COLORS['LIGHTBLUE'],
+    'color_anstxt'  : COLORS['LIGHTRED'],
+    
     }
 
 # Register script
 TRIV['register'] = {
     'script_name'       : 'trivial',
-    'author'            : 'nashgul <m.alcocer1978@gmail.com>',
+    'author'            : 'nashgul <manuel@alcocer.net> <m.alcocer1978@gmail.com>',
     'version'           : '0.1',
     'license'           : 'GPL3',
     'description'       : 'trivial game for weechat',
-    'shutdown_function' : 'free_options_cb',
+    'shutdown_function' : '',
     'charset'           : ''
     }
 
@@ -58,15 +79,7 @@ TRIV['commands']['main'] = {
     'callback_data'     : ''
     }
 
-COLORS = {
-          'WHITE'     : '00', 'BLACK'         : '01', 'DARKBLUE'  : '02', 'DARKGREEN' : '03',
-          'LIGHTRED'  : '04', 'DARKRED'       : '05', 'MAGENTA'   : '06', 'ORANGE'    : '07',
-          'YELLOW'    : '08', 'LIGHTGREEN'    : '09', 'CYAN'      : '10', 'LIGHTCYAN' : '11',
-          'LIGHTBLUE' : '12', 'LIGHTMAGENTA'  : '13', 'GRAY'      : '14', 'LIGHTGRAY' : '15'
-}
-for color in COLORS.keys():
-    COLORS[color] = u'\x03' + COLORS[color]
-COLORS['BOLD'] = u'\x02'
+
 
 class Trivial:
 
@@ -318,14 +331,14 @@ class Trivial:
 
     def Show_Question(self):
         answer = self.answer
-        string = ('%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: ' %(COLORS['LIGHTGREEN'],
-                                                                             COLORS['LIGHTRED'], str(self.qid),
-                                                                             COLORS['LIGHTGREEN'],
-                                                                             COLORS['YELLOW'],
-                                                                             COLORS['LIGHTMAGENTA'], self.theme,
-                                                                             COLORS['YELLOW'],
-                                                                             COLORS['LIGHTBLUE']) + u'\x0f' +
-                    '%s%s' %(COLORS['BOLD'], self.question) + u'\x0f')
+        string = ('%s[ %spreg No.%s %s] %s<< %sTema: %s %s>> %sPregunta: ' %(self.opts['color_qnumdec'],
+                                                                             self.opts['color_qnum'], str(self.qid),
+                                                                             self.opts['color_qnumdec'],
+                                                                             self.opts['color_topicdec'],
+                                                                             self.opts['color_topic'], self.theme,
+                                                                             self.opts['color_topicdec'],
+                                                                             self.opts['color_asklbl']) + u'\x0f' +
+                    '%s%s' %(self.opts['color_asktxt'], self.question) + u'\x0f')
         weechat.command(self.buffer_ptr, string)
         weechat.prnt('', 'Tema: %s - Pregunta: %s - Respuesta: %s' %(self.theme, self.question, self.answer))
 
@@ -511,11 +524,12 @@ def set_default_options():
 
 def Set_Instance_Options(instance):
     for option, value in TRIV['default_instance_options'].items():
-        if not weechat.config_is_set_plugin(instance + '.' + option):
+        if not weechat.config_is_set_plugin('instance.' + instance + '.' + option):
+            weechat.prnt('', instance + ' - ' + option + ' - ' + value)
             weechat.config_set_plugin('instance.' + instance + '.' + option, value)
 
 def free_options_cb(all_conf=True):
-    weechat.unhook_all()
+    #weechat.unhook_all()
     for instance in TRIV['instances']['launched'].keys():
         for option in TRIV['default_instance_options'].keys():
             TRIV['rc']['instance.' + instance + '.' + option] = weechat.config_unset_plugin('instance.' + instance + '.' + option)
